@@ -14,10 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const mockExpenses = [
   { id: 1, date: "2024-01-15", vendor: "AWS", category: "Infrastructure", amount: 15000, description: "Cloud hosting - January", status: "approved", poNumber: "PO-2024-001" },
-  { id: 2, date: "2024-01-20", vendor: "Microsoft", category: "Software", amount: 8500, description: "Office 365 licenses", status: "approved", poNumber: "PO-2024-002", licenseType: "Subscription" },
+  { id: 2, date: "2024-01-20", vendor: "Microsoft", category: "Software", amount: 8500, description: "Office 365 licenses", status: "approved", poNumber: "PO-2024-002", licenseType: "Subscription", expiredSubscription: "2024-12-31" },
   { id: 3, date: "2024-02-05", vendor: "Dell", category: "Hardware", amount: 25000, description: "Laptop refresh program", status: "pending", poNumber: "PO-2024-003", warranty: "Ada", expiredWarranty: "2027-02-05" },
   { id: 4, date: "2024-02-10", vendor: "Cisco", category: "Infrastructure", amount: 12000, description: "Network equipment", status: "approved", poNumber: "PO-2024-004" },
-  { id: 5, date: "2024-02-15", vendor: "Salesforce", category: "Software", amount: 18000, description: "CRM subscription", status: "approved", poNumber: "PO-2024-005", licenseType: "Subscription" },
+  { id: 5, date: "2024-02-15", vendor: "Salesforce", category: "Software", amount: 18000, description: "CRM subscription", status: "approved", poNumber: "PO-2024-005", licenseType: "Subscription", expiredSubscription: "2024-12-31" },
   { id: 6, date: "2024-03-01", vendor: "Google Cloud", category: "Infrastructure", amount: 9500, description: "Cloud services", status: "pending", poNumber: "PO-2024-006" },
 ];
 
@@ -42,6 +42,7 @@ export default function CostTracking() {
     warranty: "",
     expiredWarranty: "",
     licenseType: "",
+    expiredSubscription: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,6 +62,7 @@ export default function CostTracking() {
       }),
       ...((formData.category === "Software" || formData.category === "Website") && {
         licenseType: formData.licenseType,
+        expiredSubscription: formData.expiredSubscription,
       }),
     };
     setExpenses([newExpense, ...expenses]);
@@ -75,6 +77,7 @@ export default function CostTracking() {
       warranty: "",
       expiredWarranty: "",
       licenseType: "",
+      expiredSubscription: "",
     });
   };
 
@@ -193,19 +196,32 @@ export default function CostTracking() {
               )}
 
               {(formData.category === "Software" || formData.category === "Website") && (
-                <div className="space-y-2">
-                  <Label htmlFor="licenseType">License Type</Label>
-                  <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select license type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Subscription">Subscription</SelectItem>
-                      <SelectItem value="Perpetual">Perpetual</SelectItem>
-                      <SelectItem value="OEM">OEM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="licenseType">License Type</Label>
+                      <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select license type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Subscription">Subscription</SelectItem>
+                          <SelectItem value="Perpetual">Perpetual</SelectItem>
+                          <SelectItem value="OEM">OEM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expiredSubscription">Expired Subscription</Label>
+                      <Input
+                        id="expiredSubscription"
+                        type="date"
+                        value={formData.expiredSubscription}
+                        onChange={(e) => setFormData({ ...formData, expiredSubscription: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">
@@ -265,9 +281,10 @@ export default function CostTracking() {
                       <TableHead>PO Number</TableHead>
                       <TableHead>Vendor</TableHead>
                       <TableHead>Category</TableHead>
+                      <TableHead>Expired Warranty</TableHead>
+                      <TableHead>Expired Subscription</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Warranty</TableHead>
-                      <TableHead>Expired Warranty</TableHead>
                       <TableHead>License Type</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
@@ -280,9 +297,10 @@ export default function CostTracking() {
                         <TableCell className="font-medium">{expense.poNumber}</TableCell>
                         <TableCell className="font-medium">{expense.vendor}</TableCell>
                         <TableCell>{expense.category}</TableCell>
+                        <TableCell>{expense.expiredWarranty || "-"}</TableCell>
+                        <TableCell>{expense.expiredSubscription || "-"}</TableCell>
                         <TableCell>{expense.description}</TableCell>
                         <TableCell>{expense.warranty || "-"}</TableCell>
-                        <TableCell>{expense.expiredWarranty || "-"}</TableCell>
                         <TableCell>{expense.licenseType || "-"}</TableCell>
                         <TableCell className="text-right font-medium">
                           ${expense.amount.toLocaleString()}
