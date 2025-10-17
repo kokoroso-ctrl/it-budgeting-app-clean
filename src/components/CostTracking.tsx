@@ -281,11 +281,11 @@ export default function CostTracking() {
                       <TableHead>PO Number</TableHead>
                       <TableHead>Vendor</TableHead>
                       <TableHead>Category</TableHead>
-                      <TableHead>Expired Warranty</TableHead>
-                      <TableHead>Expired Subscription</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Warranty</TableHead>
+                      <TableHead>Expired Warranty</TableHead>
                       <TableHead>License Type</TableHead>
+                      <TableHead>Expired Subscription</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
@@ -297,11 +297,11 @@ export default function CostTracking() {
                         <TableCell className="font-medium">{expense.poNumber}</TableCell>
                         <TableCell className="font-medium">{expense.vendor}</TableCell>
                         <TableCell>{expense.category}</TableCell>
-                        <TableCell>{expense.expiredWarranty || "-"}</TableCell>
-                        <TableCell>{expense.expiredSubscription || "-"}</TableCell>
                         <TableCell>{expense.description}</TableCell>
                         <TableCell>{expense.warranty || "-"}</TableCell>
+                        <TableCell>{expense.expiredWarranty || "-"}</TableCell>
                         <TableCell>{expense.licenseType || "-"}</TableCell>
+                        <TableCell>{expense.expiredSubscription || "-"}</TableCell>
                         <TableCell className="text-right font-medium">
                           ${expense.amount.toLocaleString()}
                         </TableCell>
