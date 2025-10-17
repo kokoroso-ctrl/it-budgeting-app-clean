@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,8 @@ const mockVendors = [
 export default function CostTracking() {
   const [expenses, setExpenses] = useState(mockExpenses);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     vendor: "",
@@ -47,26 +49,56 @@ export default function CostTracking() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newExpense = {
-      id: expenses.length + 1,
-      date: formData.date,
-      vendor: formData.vendor,
-      category: formData.category,
-      amount: parseFloat(formData.amount),
-      description: formData.description,
-      status: "pending" as const,
-      poNumber: formData.poNumber,
-      ...(formData.category === "Hardware" && {
-        warranty: formData.warranty,
-        expiredWarranty: formData.expiredWarranty,
-      }),
-      ...((formData.category === "Software" || formData.category === "Website") && {
-        licenseType: formData.licenseType,
-        expiredSubscription: formData.expiredSubscription,
-      }),
-    };
-    setExpenses([newExpense, ...expenses]);
+    
+    if (isEditMode && editingId !== null) {
+      // Update existing expense
+      setExpenses(expenses.map(exp => 
+        exp.id === editingId 
+          ? {
+              ...exp,
+              date: formData.date,
+              vendor: formData.vendor,
+              category: formData.category,
+              amount: parseFloat(formData.amount),
+              description: formData.description,
+              poNumber: formData.poNumber,
+              ...(formData.category === "Hardware" && {
+                warranty: formData.warranty,
+                expiredWarranty: formData.expiredWarranty,
+              }),
+              ...((formData.category === "Software" || formData.category === "Website") && {
+                licenseType: formData.licenseType,
+                expiredSubscription: formData.expiredSubscription,
+              }),
+            }
+          : exp
+      ));
+    } else {
+      // Add new expense
+      const newExpense = {
+        id: expenses.length + 1,
+        date: formData.date,
+        vendor: formData.vendor,
+        category: formData.category,
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        status: "pending" as const,
+        poNumber: formData.poNumber,
+        ...(formData.category === "Hardware" && {
+          warranty: formData.warranty,
+          expiredWarranty: formData.expiredWarranty,
+        }),
+        ...((formData.category === "Software" || formData.category === "Website") && {
+          licenseType: formData.licenseType,
+          expiredSubscription: formData.expiredSubscription,
+        }),
+      };
+      setExpenses([newExpense, ...expenses]);
+    }
+    
     setIsDialogOpen(false);
+    setIsEditMode(false);
+    setEditingId(null);
     setFormData({
       date: "",
       vendor: "",
@@ -81,6 +113,56 @@ export default function CostTracking() {
     });
   };
 
+  const handleEdit = (expense: any) => {
+    setIsEditMode(true);
+    setEditingId(expense.id);
+    setFormData({
+      date: expense.date,
+      vendor: expense.vendor,
+      category: expense.category,
+      amount: expense.amount.toString(),
+      description: expense.description,
+      poNumber: expense.poNumber,
+      warranty: expense.warranty || "",
+      expiredWarranty: expense.expiredWarranty || "",
+      licenseType: expense.licenseType || "",
+      expiredSubscription: expense.expiredSubscription || "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this expense?")) {
+      setExpenses(expenses.filter(exp => exp.id !== id));
+    }
+  };
+
+  const handleStatusChange = (id: number, newStatus: string) => {
+    setExpenses(expenses.map(exp => 
+      exp.id === id ? { ...exp, status: newStatus } : exp
+    ));
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setIsEditMode(false);
+      setEditingId(null);
+      setFormData({
+        date: "",
+        vendor: "",
+        category: "Hardware",
+        amount: "",
+        description: "",
+        poNumber: "",
+        warranty: "",
+        expiredWarranty: "",
+        licenseType: "",
+        expiredSubscription: "",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -88,7 +170,7 @@ export default function CostTracking() {
           <h2 className="text-3xl font-bold tracking-tight">Cost Tracking</h2>
           <p className="text-muted-foreground">Monitor expenses and manage vendors</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -97,9 +179,9 @@ export default function CostTracking() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Record New Expense</DialogTitle>
+              <DialogTitle>{isEditMode ? "Edit Expense" : "Record New Expense"}</DialogTitle>
               <DialogDescription>
-                Add a new expense entry to track against your budget
+                {isEditMode ? "Update the expense information" : "Add a new expense entry to track against your budget"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -236,10 +318,10 @@ export default function CostTracking() {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Add Expense</Button>
+                <Button type="submit">{isEditMode ? "Update Expense" : "Add Expense"}</Button>
               </div>
             </form>
           </DialogContent>
@@ -278,26 +360,27 @@ export default function CostTracking() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
-                      <TableHead>PO Number</TableHead>
-                      <TableHead>Vendor</TableHead>
                       <TableHead>Category</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Vendor</TableHead>
+                      <TableHead>PO Number</TableHead>
                       <TableHead>Warranty</TableHead>
                       <TableHead>Expired Warranty</TableHead>
                       <TableHead>License Type</TableHead>
                       <TableHead>Expired Subscription</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {expenses.map((expense) => (
                       <TableRow key={expense.id}>
                         <TableCell>{expense.date}</TableCell>
-                        <TableCell className="font-medium">{expense.poNumber}</TableCell>
-                        <TableCell className="font-medium">{expense.vendor}</TableCell>
                         <TableCell>{expense.category}</TableCell>
                         <TableCell>{expense.description}</TableCell>
+                        <TableCell className="font-medium">{expense.vendor}</TableCell>
+                        <TableCell className="font-medium">{expense.poNumber}</TableCell>
                         <TableCell>{expense.warranty || "-"}</TableCell>
                         <TableCell>{expense.expiredWarranty || "-"}</TableCell>
                         <TableCell>{expense.licenseType || "-"}</TableCell>
@@ -306,11 +389,52 @@ export default function CostTracking() {
                           ${expense.amount.toLocaleString()}
                         </TableCell>
                         <TableCell>
-                          {expense.status === "approved" ? (
-                            <Badge className="bg-green-500">Approved</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-500">Pending</Badge>
-                          )}
+                          <Select 
+                            value={expense.status} 
+                            onValueChange={(value) => handleStatusChange(expense.id, value)}
+                          >
+                            <SelectTrigger className="w-[130px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="approved">
+                                <span className="flex items-center">
+                                  <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                  Approved
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="pending">
+                                <span className="flex items-center">
+                                  <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+                                  Pending
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="rejected">
+                                <span className="flex items-center">
+                                  <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                  Rejected
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(expense)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(expense.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
