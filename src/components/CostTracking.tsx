@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,11 @@ const mockVendors = [
 ];
 
 export default function CostTracking() {
-  const [expenses, setExpenses] = useState(mockExpenses);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -47,56 +51,164 @@ export default function CostTracking() {
     expiredSubscription: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch expenses and vendors on mount
+  useEffect(() => {
+    fetchExpenses();
+    fetchVendors();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/expenses?sort=date&order=desc');
+      if (!response.ok) throw new Error('Failed to fetch expenses');
+      const data = await response.json();
+      setExpenses(data);
+    } catch (err) {
+      setError('Failed to load expenses. Please try again.');
+      console.error('Fetch expenses error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch('/api/vendors?sort=totalSpent&order=desc');
+      if (!response.ok) throw new Error('Failed to fetch vendors');
+      const data = await response.json();
+      setVendors(data);
+    } catch (err) {
+      console.error('Fetch vendors error:', err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isEditMode && editingId !== null) {
-      // Update existing expense
-      setExpenses(expenses.map(exp => 
-        exp.id === editingId 
-          ? {
-              ...exp,
-              date: formData.date,
-              vendor: formData.vendor,
-              category: formData.category,
-              amount: parseFloat(formData.amount),
-              description: formData.description,
-              poNumber: formData.poNumber,
-              ...(formData.category === "Hardware" && {
-                warranty: formData.warranty,
-                expiredWarranty: formData.expiredWarranty,
-              }),
-              ...((formData.category === "Software" || formData.category === "Website") && {
-                licenseType: formData.licenseType,
-                expiredSubscription: formData.expiredSubscription,
-              }),
-            }
-          : exp
-      ));
-    } else {
-      // Add new expense
-      const newExpense = {
-        id: expenses.length + 1,
-        date: formData.date,
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const payload: any = {
+        date: new Date(formData.date).toISOString(),
         vendor: formData.vendor,
         category: formData.category,
-        amount: parseFloat(formData.amount),
         description: formData.description,
-        status: "pending" as const,
+        amount: parseFloat(formData.amount),
+        status: isEditMode ? undefined : "pending",
         poNumber: formData.poNumber,
-        ...(formData.category === "Hardware" && {
-          warranty: formData.warranty,
-          expiredWarranty: formData.expiredWarranty,
-        }),
-        ...((formData.category === "Software" || formData.category === "Website") && {
-          licenseType: formData.licenseType,
-          expiredSubscription: formData.expiredSubscription,
-        }),
       };
-      setExpenses([newExpense, ...expenses]);
+
+      if (formData.category === "Hardware") {
+        payload.warranty = formData.warranty || null;
+        payload.expiredWarranty = formData.expiredWarranty ? new Date(formData.expiredWarranty).toISOString() : null;
+      }
+
+      if (formData.category === "Software" || formData.category === "Website") {
+        payload.licenseType = formData.licenseType || null;
+        payload.expiredSubscription = formData.expiredSubscription ? new Date(formData.expiredSubscription).toISOString() : null;
+      }
+
+      if (isEditMode && editingId !== null) {
+        // Update existing expense
+        const response = await fetch(`/api/expenses?id=${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update expense');
+        }
+      } else {
+        // Create new expense
+        const response = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create expense');
+        }
+      }
+
+      // Refresh data
+      await fetchExpenses();
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+      console.error('Submit error:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsDialogOpen(false);
+  };
+
+  const handleEdit = (expense: any) => {
+    setIsEditMode(true);
+    setEditingId(expense.id);
+    setFormData({
+      date: expense.date.split('T')[0],
+      vendor: expense.vendor,
+      category: expense.category,
+      amount: expense.amount.toString(),
+      description: expense.description,
+      poNumber: expense.poNumber,
+      warranty: expense.warranty || "",
+      expiredWarranty: expense.expiredWarranty ? expense.expiredWarranty.split('T')[0] : "",
+      licenseType: expense.licenseType || "",
+      expiredSubscription: expense.expiredSubscription ? expense.expiredSubscription.split('T')[0] : "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this expense?")) return;
+
+    try {
+      setError(null);
+      const response = await fetch(`/api/expenses?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete expense');
+      }
+
+      await fetchExpenses();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete expense');
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    try {
+      setError(null);
+      const response = await fetch(`/api/expenses?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update status');
+      }
+
+      await fetchExpenses();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update status');
+      console.error('Status update error:', err);
+    }
+  };
+
+  const resetForm = () => {
     setIsEditMode(false);
     setEditingId(null);
     setFormData({
@@ -113,54 +225,20 @@ export default function CostTracking() {
     });
   };
 
-  const handleEdit = (expense: any) => {
-    setIsEditMode(true);
-    setEditingId(expense.id);
-    setFormData({
-      date: expense.date,
-      vendor: expense.vendor,
-      category: expense.category,
-      amount: expense.amount.toString(),
-      description: expense.description,
-      poNumber: expense.poNumber,
-      warranty: expense.warranty || "",
-      expiredWarranty: expense.expiredWarranty || "",
-      licenseType: expense.licenseType || "",
-      expiredSubscription: expense.expiredSubscription || "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this expense?")) {
-      setExpenses(expenses.filter(exp => exp.id !== id));
-    }
-  };
-
-  const handleStatusChange = (id: number, newStatus: string) => {
-    setExpenses(expenses.map(exp => 
-      exp.id === id ? { ...exp, status: newStatus } : exp
-    ));
-  };
-
   const handleDialogOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
-      setIsEditMode(false);
-      setEditingId(null);
-      setFormData({
-        date: "",
-        vendor: "",
-        category: "Hardware",
-        amount: "",
-        description: "",
-        poNumber: "",
-        warranty: "",
-        expiredWarranty: "",
-        licenseType: "",
-        expiredSubscription: "",
-      });
+      resetForm();
+      setError(null);
     }
+  };
+
+  const formatDate = (isoDate: string) => {
+    return new Date(isoDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   return (
@@ -318,15 +396,23 @@ export default function CostTracking() {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)}>
+                <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
                   Cancel
                 </Button>
-                <Button type="submit">{isEditMode ? "Update Expense" : "Add Expense"}</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : (isEditMode ? "Update Expense" : "Add Expense")}
+                </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
 
       <Tabs defaultValue="expenses" className="space-y-4">
         <TabsList>
@@ -355,92 +441,102 @@ export default function CostTracking() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Vendor</TableHead>
-                      <TableHead>PO Number</TableHead>
-                      <TableHead>Warranty</TableHead>
-                      <TableHead>Expired Warranty</TableHead>
-                      <TableHead>License Type</TableHead>
-                      <TableHead>Expired Subscription</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-center">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {expenses.map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell>{expense.date}</TableCell>
-                        <TableCell>{expense.category}</TableCell>
-                        <TableCell>{expense.description}</TableCell>
-                        <TableCell className="font-medium">{expense.vendor}</TableCell>
-                        <TableCell className="font-medium">{expense.poNumber}</TableCell>
-                        <TableCell>{expense.warranty || "-"}</TableCell>
-                        <TableCell>{expense.expiredWarranty || "-"}</TableCell>
-                        <TableCell>{expense.licenseType || "-"}</TableCell>
-                        <TableCell>{expense.expiredSubscription || "-"}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          ${expense.amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Select 
-                            value={expense.status} 
-                            onValueChange={(value) => handleStatusChange(expense.id, value)}
-                          >
-                            <SelectTrigger className="w-[130px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="approved">
-                                <span className="flex items-center">
-                                  <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                                  Approved
-                                </span>
-                              </SelectItem>
-                              <SelectItem value="pending">
-                                <span className="flex items-center">
-                                  <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
-                                  Pending
-                                </span>
-                              </SelectItem>
-                              <SelectItem value="rejected">
-                                <span className="flex items-center">
-                                  <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-                                  Rejected
-                                </span>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(expense)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(expense.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-muted-foreground">Loading expenses...</div>
+                </div>
+              ) : expenses.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-muted-foreground">No expenses found</div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Vendor</TableHead>
+                        <TableHead>PO Number</TableHead>
+                        <TableHead>Warranty</TableHead>
+                        <TableHead>Expired Warranty</TableHead>
+                        <TableHead>License Type</TableHead>
+                        <TableHead>Expired Subscription</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{formatDate(expense.date)}</TableCell>
+                          <TableCell>{expense.category}</TableCell>
+                          <TableCell>{expense.description}</TableCell>
+                          <TableCell className="font-medium">{expense.vendor}</TableCell>
+                          <TableCell className="font-medium">{expense.poNumber}</TableCell>
+                          <TableCell>{expense.warranty || "-"}</TableCell>
+                          <TableCell>{expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}</TableCell>
+                          <TableCell>{expense.licenseType || "-"}</TableCell>
+                          <TableCell>{expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            ${expense.amount.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <Select 
+                              value={expense.status} 
+                              onValueChange={(value) => handleStatusChange(expense.id, value)}
+                            >
+                              <SelectTrigger className="w-[130px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="approved">
+                                  <span className="flex items-center">
+                                    <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                    Approved
+                                  </span>
+                                </SelectItem>
+                                <SelectItem value="pending">
+                                  <span className="flex items-center">
+                                    <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+                                    Pending
+                                  </span>
+                                </SelectItem>
+                                <SelectItem value="rejected">
+                                  <span className="flex items-center">
+                                    <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                    Rejected
+                                  </span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(expense)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(expense.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -452,32 +548,40 @@ export default function CostTracking() {
               <CardDescription>Overview of IT vendors and their contracts</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vendor Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Total Spent</TableHead>
-                    <TableHead className="text-center">Active Contracts</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockVendors.map((vendor) => (
-                    <TableRow key={vendor.id}>
-                      <TableCell className="font-medium">{vendor.name}</TableCell>
-                      <TableCell>{vendor.category}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        ${vendor.totalSpent.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center">{vendor.contracts}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-green-500">Active</Badge>
-                      </TableCell>
+              {vendors.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-muted-foreground">No vendors found</div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vendor Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Total Spent</TableHead>
+                      <TableHead className="text-center">Active Contracts</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {vendors.map((vendor) => (
+                      <TableRow key={vendor.id}>
+                        <TableCell className="font-medium">{vendor.name}</TableCell>
+                        <TableCell>{vendor.category}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          ${vendor.totalSpent.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-center">{vendor.contracts}</TableCell>
+                        <TableCell>
+                          <Badge className={vendor.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}>
+                            {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
