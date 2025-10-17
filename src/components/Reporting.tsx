@@ -122,7 +122,7 @@ export default function Reporting() {
   return (
     <div className="space-y-6">
       {/* Print Styles */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body * {
             visibility: hidden;
@@ -141,7 +141,7 @@ export default function Reporting() {
             margin: 20mm;
           }
         }
-      `}</style>
+      `}} />
 
       <div className="flex justify-between items-center print:hidden">
         <div>
