@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FileText, Receipt, BarChart3, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, Receipt, BarChart3, Menu, LogOut } from "lucide-react";
+import { useSession, authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import Dashboard from "@/components/Dashboard";
 import BudgetPlanning from "@/components/BudgetPlanning";
 import CostTracking from "@/components/CostTracking";
@@ -11,6 +14,39 @@ import Reporting from "@/components/Reporting";
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { data: session, isPending, refetch } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isPending && !session?.user) {
+      router.push("/login");
+    }
+  }, [session, isPending, router]);
+
+  const handleLogout = async () => {
+    const { error } = await authClient.signOut();
+    if (error?.code) {
+      toast.error("Gagal logout");
+    } else {
+      localStorage.removeItem("bearer_token");
+      refetch();
+      router.push("/login");
+      toast.success("Logout berhasil");
+    }
+  };
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session?.user) return null;
 
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
@@ -24,10 +60,15 @@ export default function Home() {
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 border-r bg-card overflow-hidden`}>
         <div className="p-6">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            IT Budgeting
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Financial Management</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">M</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">PT MAMAGREEN PACIFIC</h1>
+              <p className="text-xs text-muted-foreground">IT Budgeting Dashboard</p>
+            </div>
+          </div>
         </div>
         <nav className="space-y-1 px-3">
           {navigation.map((item) => (
@@ -57,10 +98,21 @@ export default function Home() {
             </Button>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium">Admin User</p>
+                <p className="text-sm font-medium">{session.user.name || session.user.email}</p>
                 <p className="text-xs text-muted-foreground">IT Department</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600" />
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
+                {session.user.name?.[0]?.toUpperCase() || "U"}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </header>
