@@ -2,301 +2,297 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { Bar, BarChart, Line, LineChart, Pie, PieChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
+import { Button } from "@/components/ui/button";
+import { Download, FileDown } from "lucide-react";
+import { Pie, PieChart, Line, LineChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
+const COLORS = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export default function Dashboard() {
   const [expenses, setExpenses] = useState<any[]>([]);
-  const [budgets, setBudgets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchExpenses();
   }, []);
 
-  const fetchData = async () => {
+  const fetchExpenses = async () => {
     try {
       setIsLoading(true);
-      const [expensesRes, budgetsRes] = await Promise.all([
-        fetch('/api/expenses'),
-        fetch('/api/budgets')
-      ]);
-
-      if (expensesRes.ok) {
-        const expensesData = await expensesRes.json();
-        setExpenses(expensesData);
-      }
-
-      if (budgetsRes.ok) {
-        const budgetsData = await budgetsRes.json();
-        setBudgets(budgetsData);
-      }
+      const response = await fetch('/api/expenses');
+      if (!response.ok) throw new Error('Failed to fetch expenses');
+      const data = await response.json();
+      setExpenses(data);
     } catch (err) {
-      console.error('Fetch data error:', err);
+      console.error('Fetch expenses error:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Calculate totals
-  const totalBudget = budgets
-    .filter(b => b.status === 'approved')
-    .reduce((sum, b) => sum + b.amount, 0);
-  
-  const totalSpent = expenses
-    .filter(e => e.status === 'approved')
-    .reduce((sum, e) => sum + e.amount, 0);
-
-  const variance = totalBudget - totalSpent;
-  const variancePercent = totalBudget > 0 ? ((variance / totalBudget) * 100).toFixed(1) : '0.0';
-
-  // Group expenses by category
-  const categorySpending: { [key: string]: { budget: number; spent: number; remaining: number } } = {};
-  
-  budgets.filter(b => b.status === 'approved').forEach(budget => {
-    if (!categorySpending[budget.category]) {
-      categorySpending[budget.category] = { budget: 0, spent: 0, remaining: 0 };
-    }
-    categorySpending[budget.category].budget += budget.amount;
-  });
-
-  expenses.filter(e => e.status === 'approved').forEach(expense => {
-    if (!categorySpending[expense.category]) {
-      categorySpending[expense.category] = { budget: 0, spent: 0, remaining: 0 };
-    }
-    categorySpending[expense.category].spent += expense.amount;
-  });
-
-  Object.keys(categorySpending).forEach(category => {
-    categorySpending[category].remaining = categorySpending[category].budget - categorySpending[category].spent;
-  });
-
-  const categorySpendingArray = Object.entries(categorySpending).map(([category, data]) => ({
-    category,
-    ...data
-  }));
-
-  // Department/category distribution for pie chart
-  const departmentData = categorySpendingArray.map((cat, index) => ({
-    name: cat.category,
-    value: cat.budget,
-    color: `hsl(var(--chart-${(index % 5) + 1}))`
-  }));
-
-  // Monthly budget vs actual (using available data)
-  const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const month = new Date(2024, i, 1).toLocaleDateString('en-US', { month: 'short' });
-    const monthlyBudget = totalBudget / 12;
-    const monthlyActual = totalSpent / 6; // Spread actual spending across months
-    
-    return {
-      month,
-      budget: Math.round(monthlyBudget),
-      actual: Math.round(monthlyActual * (0.9 + Math.random() * 0.2)) // Add some variance
-    };
-  });
-
-  // Alerts based on actual data
-  const alerts = categorySpendingArray
-    .filter(cat => cat.remaining < 0)
-    .map((cat, index) => ({
-      id: index + 1,
-      type: 'overrun',
-      category: cat.category,
-      message: `${cat.category} category exceeded budget by $${Math.abs(cat.remaining).toLocaleString()}`,
-      severity: 'high' as const
-    }));
-
-  // Add warning alerts for categories at >90% budget
-  categorySpendingArray
-    .filter(cat => cat.budget > 0 && (cat.spent / cat.budget) > 0.9 && cat.remaining >= 0)
-    .forEach((cat, index) => {
-      alerts.push({
-        id: alerts.length + index + 1,
-        type: 'warning',
-        category: cat.category,
-        message: `${cat.category} spending at ${((cat.spent / cat.budget) * 100).toFixed(1)}% of budget`,
-        severity: 'medium' as const
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/expenses?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
       });
+
+      if (!response.ok) throw new Error('Failed to update status');
+      await fetchExpenses();
+    } catch (err) {
+      console.error('Status update error:', err);
+    }
+  };
+
+  // Calculate total spending
+  const totalSpending = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  
+  // Group by category for pie chart
+  const categoryData = expenses.reduce((acc: any, exp) => {
+    if (!acc[exp.category]) {
+      acc[exp.category] = 0;
+    }
+    acc[exp.category] += exp.amount;
+    return acc;
+  }, {});
+
+  const pieData = Object.entries(categoryData).map(([name, value]: [string, any]) => ({
+    name,
+    value,
+    percentage: ((value / totalSpending) * 100).toFixed(0)
+  }));
+
+  // Group by month for trend chart
+  const monthlyData = expenses.reduce((acc: any, exp) => {
+    const date = new Date(exp.date);
+    const monthKey = `${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`;
+    
+    if (!acc[monthKey]) {
+      acc[monthKey] = 0;
+    }
+    acc[monthKey] += exp.amount;
+    return acc;
+  }, {});
+
+  const trendData = Object.entries(monthlyData)
+    .map(([month, amount]: [string, any]) => ({
+      month,
+      amount: amount / 1000000 // Convert to millions
+    }))
+    .sort((a, b) => {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      const [monthA, yearA] = a.month.split(' ');
+      const [monthB, yearB] = b.month.split(' ');
+      const yearDiff = parseInt(yearA) - parseInt(yearB);
+      if (yearDiff !== 0) return yearDiff;
+      return months.indexOf(monthA) - months.indexOf(monthB);
     });
+
+  const formatDate = (isoDate: string) => {
+    return new Date(isoDate).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading dashboard data...</div>
+        <div className="text-muted-foreground">Memuat data transaksi...</div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${(totalBudget / 1000000).toFixed(2)}M</div>
-            <p className="text-xs text-muted-foreground">Annual IT Budget 2024</p>
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Transaksi Pengeluaran</h2>
+          <p className="text-muted-foreground">Monitor dan kelola semua pengeluaran IT</p>
+        </div>
+        <div className="flex space-x-2">
+          <Button className="bg-green-600 hover:bg-green-700">
+            Tambah Transaksi
+          </Button>
+          <Button variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      </div>
 
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-3">
+            <CardDescription>Total Pengeluaran</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${(totalSpent / 1000000).toFixed(2)}M</div>
-            <p className="text-xs text-muted-foreground">
-              {totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(1) : '0'}% of budget
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Variance</CardTitle>
-            <TrendingUp className={`h-4 w-4 ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${(Math.abs(variance) / 1000).toFixed(0)}K
+            <div className="text-3xl font-bold">
+              Rp {totalSpending.toLocaleString('id-ID')}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {variance >= 0 ? `${variancePercent}% under budget` : `${variancePercent}% over budget`}
-            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alerts</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-500" />
+          <CardHeader className="pb-3">
+            <CardDescription>Jumlah Transaksi</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{alerts.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {alerts.filter(a => a.severity === 'high').length} critical issues
-            </p>
+            <div className="text-3xl font-bold">{expenses.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts Section */}
-      <Tabs defaultValue="budget-vs-actual" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="budget-vs-actual">Budget vs Actual</TabsTrigger>
-          <TabsTrigger value="department">By Department</TabsTrigger>
-          <TabsTrigger value="category">By Category</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pengeluaran per Kategori</CardTitle>
+            <CardDescription>Distribusi pengeluaran berdasarkan kategori</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pieData.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-muted-foreground">Belum ada data</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percentage }) => `${name}: ${percentage}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: any) => `Rp ${value.toLocaleString('id-ID')}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
-        <TabsContent value="budget-vs-actual" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Budget vs Actual Spending</CardTitle>
-              <CardDescription>Monthly comparison for 2024</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={monthlyData}>
+        {/* Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Trend Pengeluaran</CardTitle>
+            <CardDescription>Perkembangan pengeluaran per bulan</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {trendData.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-muted-foreground">Belum ada data</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="budget" fill="hsl(var(--chart-1))" name="Budget" />
-                  <Bar dataKey="actual" fill="hsl(var(--chart-2))" name="Actual" />
-                </BarChart>
+                  <YAxis label={{ value: 'Juta (Rp)', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value: any) => `${value.toFixed(1)}M`} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ fill: '#10b981', r: 4 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="department" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Budget Allocation by Department</CardTitle>
-              <CardDescription>Total budget distribution across departments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {departmentData.length === 0 ? (
-                <div className="flex items-center justify-center h-[350px]">
-                  <p className="text-muted-foreground">No budget data available</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={departmentData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {departmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="category" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Category Budget Status</CardTitle>
-              <CardDescription>Spending status by category</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {categorySpendingArray.length === 0 ? (
-                <div className="flex items-center justify-center py-8">
-                  <p className="text-muted-foreground">No category data available</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {categorySpendingArray.map((cat) => (
-                    <div key={cat.category} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{cat.category}</span>
-                        <span className="text-sm text-muted-foreground">
-                          ${(cat.spent / 1000).toFixed(0)}K / ${(cat.budget / 1000).toFixed(0)}K
-                        </span>
-                      </div>
-                      <div className="relative h-2 w-full rounded-full bg-secondary">
-                        <div
-                          className={`absolute left-0 top-0 h-full rounded-full ${
-                            cat.remaining < 0 ? "bg-red-500" : "bg-green-500"
-                          }`}
-                          style={{ width: `${Math.min((cat.spent / cat.budget) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {cat.budget > 0 ? ((cat.spent / cat.budget) * 100).toFixed(1) : '0'}% used
-                        </span>
-                        <span className={cat.remaining < 0 ? "text-red-500 font-medium" : "text-green-600"}>
-                          {cat.remaining < 0 ? "Over" : "Under"} ${Math.abs(cat.remaining / 1000).toFixed(0)}K
-                        </span>
-                      </div>
-                    </div>
+      {/* Transactions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Transaksi</CardTitle>
+          <CardDescription>Riwayat transaksi pengeluaran</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {expenses.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Belum ada transaksi</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Deskripsi</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead>No PO</TableHead>
+                    <TableHead>Status Garansi</TableHead>
+                    <TableHead>Expired Garansi</TableHead>
+                    <TableHead>Jenis Lisensi</TableHead>
+                    <TableHead>Expired Lisensi</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-center">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell>{formatDate(expense.date)}</TableCell>
+                      <TableCell>{expense.category}</TableCell>
+                      <TableCell>{expense.description}</TableCell>
+                      <TableCell>{expense.vendor}</TableCell>
+                      <TableCell>{expense.poNumber || "-"}</TableCell>
+                      <TableCell>{expense.warranty || "-"}</TableCell>
+                      <TableCell>{expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}</TableCell>
+                      <TableCell>{expense.licenseType || "-"}</TableCell>
+                      <TableCell>{expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}</TableCell>
+                      <TableCell>
+                        <Select 
+                          value={expense.status} 
+                          onValueChange={(value) => handleStatusChange(expense.id, value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="approved">
+                              <Badge className="bg-green-500">Disetujui</Badge>
+                            </SelectItem>
+                            <SelectItem value="pending">
+                              <Badge className="bg-yellow-500">Pending</Badge>
+                            </SelectItem>
+                            <SelectItem value="rejected">
+                              <Badge className="bg-red-500">Ditolak</Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button variant="ghost" size="sm">
+                          •••
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
