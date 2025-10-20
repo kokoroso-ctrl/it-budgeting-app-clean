@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileDown, Pencil, Trash2, Plus } from "lucide-react";
+import { Download, FileDown, Pencil, Trash2, Plus, Search } from "lucide-react";
 import { Pie, PieChart, Line, LineChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as XLSX from 'xlsx';
 
 const COLORS = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -21,6 +22,12 @@ export default function Dashboard() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Filter states
+  const [periodFilter, setPeriodFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const [formData, setFormData] = useState({
     date: "",
     vendor: "",
@@ -50,6 +57,70 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Filter expenses based on period, category, and search
+  const filteredExpenses = expenses.filter((expense) => {
+    // Period filter
+    if (periodFilter !== "all") {
+      const expenseDate = new Date(expense.date);
+      const expenseMonth = `${expenseDate.getFullYear()}-${String(expenseDate.getMonth() + 1).padStart(2, '0')}`;
+      if (expenseMonth !== periodFilter) return false;
+    }
+
+    // Category filter
+    if (categoryFilter !== "all" && expense.category !== categoryFilter) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        formatDate(expense.date).toLowerCase().includes(query) ||
+        expense.category.toLowerCase().includes(query) ||
+        expense.description.toLowerCase().includes(query) ||
+        expense.vendor.toLowerCase().includes(query) ||
+        (expense.poNumber && expense.poNumber.toLowerCase().includes(query))
+      );
+    }
+
+    return true;
+  });
+
+  // Get unique months from expenses for period filter
+  const availableMonths = Array.from(
+    new Set(
+      expenses.map((exp) => {
+        const date = new Date(exp.date);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      })
+    )
+  ).sort().reverse();
+
+  // Get unique categories
+  const categories = ["Hardware", "Software", "Website", "Personnel", "Services", "Infrastructure"];
+
+  // Export to Excel
+  const handleExportExcel = () => {
+    const exportData = filteredExpenses.map((expense) => ({
+      Tanggal: formatDate(expense.date),
+      Kategori: expense.category,
+      Deskripsi: expense.description,
+      Vendor: expense.vendor,
+      'No PO': expense.poNumber || '-',
+      Harga: expense.amount,
+      'Status Garansi': expense.warranty || '-',
+      'Expired Garansi': expense.expiredWarranty ? formatDate(expense.expiredWarranty) : '-',
+      'Jenis Lisensi': expense.licenseType || '-',
+      'Expired Lisensi': expense.expiredSubscription ? formatDate(expense.expiredSubscription) : '-',
+      Status: expense.status,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
+    XLSX.writeFile(wb, `Transaksi_Pengeluaran_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleEdit = (expense: any) => {
@@ -177,11 +248,11 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate total spending
-  const totalSpending = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  // Calculate total spending from filtered data
+  const totalSpending = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   
-  // Group by category for pie chart
-  const categoryData = expenses.reduce((acc: any, exp) => {
+  // Group by category for pie chart (from filtered data)
+  const categoryData = filteredExpenses.reduce((acc: any, exp) => {
     if (!acc[exp.category]) {
       acc[exp.category] = 0;
     }
@@ -195,8 +266,8 @@ export default function Dashboard() {
     percentage: ((value / totalSpending) * 100).toFixed(0)
   }));
 
-  // Group by month for trend chart
-  const monthlyData = expenses.reduce((acc: any, exp) => {
+  // Group by month for trend chart (from filtered data)
+  const monthlyData = filteredExpenses.reduce((acc: any, exp) => {
     const date = new Date(exp.date);
     const monthKey = `${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`;
     
@@ -229,6 +300,12 @@ export default function Dashboard() {
     });
   };
 
+  const formatMonthLabel = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -244,167 +321,61 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold tracking-tight">Transaksi Pengeluaran</h2>
           <p className="text-muted-foreground">Monitor dan kelola semua pengeluaran IT</p>
         </div>
-        <div className="flex space-x-2">
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Transaksi
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{isEditMode ? "Edit Transaksi" : "Tambah Transaksi Baru"}</DialogTitle>
-                <DialogDescription>
-                  {isEditMode ? "Update informasi transaksi" : "Tambahkan transaksi pengeluaran baru"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Tanggal</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Jumlah (Rp)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="e.g., 5000000"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vendor">Vendor</Label>
-                    <Input
-                      id="vendor"
-                      placeholder="e.g., AWS, Microsoft"
-                      value={formData.vendor}
-                      onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Kategori</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Hardware">Hardware</SelectItem>
-                        <SelectItem value="Software">Software</SelectItem>
-                        <SelectItem value="Website">Website</SelectItem>
-                        <SelectItem value="Personnel">Personnel</SelectItem>
-                        <SelectItem value="Services">Services</SelectItem>
-                        <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="poNumber">No PO</Label>
-                  <Input
-                    id="poNumber"
-                    placeholder="e.g., PO-2024-001"
-                    value={formData.poNumber}
-                    onChange={(e) => setFormData({ ...formData, poNumber: e.target.value })}
-                    required
-                  />
-                </div>
-
-                {formData.category === "Hardware" && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="warranty">Garansi</Label>
-                      <Select value={formData.warranty} onValueChange={(value) => setFormData({ ...formData, warranty: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih status garansi" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Ada">Ada</SelectItem>
-                          <SelectItem value="Tidak Ada">Tidak Ada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expiredWarranty">Expired Garansi</Label>
-                      <Input
-                        id="expiredWarranty"
-                        type="date"
-                        value={formData.expiredWarranty}
-                        onChange={(e) => setFormData({ ...formData, expiredWarranty: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {(formData.category === "Software" || formData.category === "Website") && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="licenseType">Jenis Lisensi</Label>
-                      <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih jenis lisensi" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Subscription">Subscription</SelectItem>
-                          <SelectItem value="Perpetual">Perpetual</SelectItem>
-                          <SelectItem value="OEM">OEM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expiredSubscription">Expired Lisensi</Label>
-                      <Input
-                        id="expiredSubscription"
-                        type="date"
-                        value={formData.expiredSubscription}
-                        onChange={(e) => setFormData({ ...formData, expiredSubscription: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Deskripsi</Label>
-                  <Input
-                    id="description"
-                    placeholder="Deskripsi singkat pengeluaran..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
-                    Batal
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Menyimpan..." : (isEditMode ? "Update Transaksi" : "Tambah Transaksi")}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-          <Button variant="outline">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-        </div>
       </div>
+
+      {/* Filters Section */}
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="period-filter" className="text-sm font-medium">Periode</Label>
+              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                <SelectTrigger id="period-filter" className="bg-white">
+                  <SelectValue placeholder="Pilih periode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua</SelectItem>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {formatMonthLabel(month)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category-filter" className="text-sm font-medium">Kategori</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger id="category-filter" className="bg-white">
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Aksi</Label>
+              <Button 
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => {
+                  // Refresh or navigate to report
+                  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                }}
+              >
+                Buka Laporan
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -424,7 +395,7 @@ export default function Dashboard() {
             <CardDescription>Jumlah Transaksi</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{expenses.length}</div>
+            <div className="text-3xl font-bold">{filteredExpenses.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -498,16 +469,201 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Transactions Table */}
+      {/* Transactions Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Transaksi</CardTitle>
-          <CardDescription>Riwayat transaksi pengeluaran</CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Daftar Transaksi</CardTitle>
+              <CardDescription>Riwayat transaksi pengeluaran</CardDescription>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={handleExportExcel}
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+                <DialogTrigger asChild>
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tambah Transaksi
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{isEditMode ? "Edit Transaksi" : "Tambah Transaksi Baru"}</DialogTitle>
+                    <DialogDescription>
+                      {isEditMode ? "Update informasi transaksi" : "Tambahkan transaksi pengeluaran baru"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="date">Tanggal</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="amount">Jumlah (Rp)</Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          placeholder="e.g., 5000000"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="vendor">Vendor</Label>
+                        <Input
+                          id="vendor"
+                          placeholder="e.g., AWS, Microsoft"
+                          value={formData.vendor}
+                          onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Kategori</Label>
+                        <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Hardware">Hardware</SelectItem>
+                            <SelectItem value="Software">Software</SelectItem>
+                            <SelectItem value="Website">Website</SelectItem>
+                            <SelectItem value="Personnel">Personnel</SelectItem>
+                            <SelectItem value="Services">Services</SelectItem>
+                            <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="poNumber">No PO</Label>
+                      <Input
+                        id="poNumber"
+                        placeholder="e.g., PO-2024-001"
+                        value={formData.poNumber}
+                        onChange={(e) => setFormData({ ...formData, poNumber: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    {formData.category === "Hardware" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="warranty">Garansi</Label>
+                          <Select value={formData.warranty} onValueChange={(value) => setFormData({ ...formData, warranty: value })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih status garansi" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Ada">Ada</SelectItem>
+                              <SelectItem value="Tidak Ada">Tidak Ada</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="expiredWarranty">Expired Garansi</Label>
+                          <Input
+                            id="expiredWarranty"
+                            type="date"
+                            value={formData.expiredWarranty}
+                            onChange={(e) => setFormData({ ...formData, expiredWarranty: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {(formData.category === "Software" || formData.category === "Website") && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="licenseType">Jenis Lisensi</Label>
+                          <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih jenis lisensi" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Subscription">Subscription</SelectItem>
+                              <SelectItem value="Perpetual">Perpetual</SelectItem>
+                              <SelectItem value="OEM">OEM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="expiredSubscription">Expired Lisensi</Label>
+                          <Input
+                            id="expiredSubscription"
+                            type="date"
+                            value={formData.expiredSubscription}
+                            onChange={(e) => setFormData({ ...formData, expiredSubscription: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Deskripsi</Label>
+                      <Input
+                        id="description"
+                        placeholder="Deskripsi singkat pengeluaran..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
+                        Batal
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+                        {isSubmitting ? "Menyimpan..." : (isEditMode ? "Update Transaksi" : "Tambah Transaksi")}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
+          {/* Search Box */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari berdasarkan tanggal, kategori, deskripsi, vendor, atau PO..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {filteredExpenses.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Belum ada transaksi</div>
+              <div className="text-muted-foreground">
+                {searchQuery || periodFilter !== "all" || categoryFilter !== "all" 
+                  ? "Tidak ada transaksi yang sesuai dengan filter" 
+                  : "Belum ada transaksi"}
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -528,7 +684,7 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenses.map((expense) => (
+                  {filteredExpenses.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>{formatDate(expense.date)}</TableCell>
                       <TableCell>{expense.category}</TableCell>
