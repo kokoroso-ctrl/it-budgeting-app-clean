@@ -215,76 +215,80 @@ export default function Reporting() {
       <div id="printable-report" ref={printRef} className="hidden print:block">
         <div className="space-y-6">
           {/* Company Letterhead */}
-          <div className="border-b-2 border-gray-300 pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <img 
-                  src="https://mamagreen.com/wp-content/uploads/2024/10/MAMAGREEN-PRIMARY-LOGO-100px.jpg" 
-                  alt="Mamagreen Logo" 
-                  className="h-16 mb-2"
-                />
-                <h1 className="text-2xl font-bold">PT MAMAGREEN PACIFIC</h1>
-                <p className="text-sm mt-1">
-                  Outdoor Furniture Manufacturing<br />
-                  Indonesia<br />
-                  www.mamagreen.com
-                </p>
-              </div>
-              <div className="text-right text-sm">
-                <p className="font-semibold">EXPENSE REPORT</p>
-                <p>Date: {new Date().toLocaleDateString("id-ID")}</p>
-                {filterType === "month" && selectedMonth && (
-                  <p>Period: {new Date(selectedMonth + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })}</p>
-                )}
-                {filterType === "category" && selectedCategory && (
-                  <p>Category: {selectedCategory}</p>
-                )}
-              </div>
+          <div className="border-b-2 border-gray-800 pb-4">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">PT MAMAGREEN PACIFIC</h1>
+              <p className="text-sm mt-2">
+                Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
+              </p>
             </div>
           </div>
 
+          {/* Report Title */}
+          <div className="text-center">
+            <h2 className="text-xl font-bold">Laporan Pengeluaran IT</h2>
+            {filterType === "month" && selectedMonth && (
+              <p className="text-sm mt-1">
+                Periode: {new Date(selectedMonth + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+              </p>
+            )}
+            {filterType === "category" && selectedCategory && (
+              <p className="text-sm mt-1">Kategori: {selectedCategory}</p>
+            )}
+          </div>
+
           {/* Report Content */}
-          <div>
-            <h2 className="text-xl font-bold mb-4">Laporan Pengeluaran</h2>
-            <table className="w-full text-sm">
+          <div className="mt-6">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-gray-300">
-                  <th className="text-left py-2">Date</th>
-                  <th className="text-left py-2">Category</th>
-                  <th className="text-left py-2">Description</th>
-                  <th className="text-left py-2">Vendor</th>
-                  <th className="text-left py-2">PO Number</th>
-                  <th className="text-right py-2">Amount (Rp)</th>
-                  <th className="text-center py-2">Status</th>
+                <tr className="border-b-2 border-gray-800">
+                  <th className="text-left py-2 px-2">No</th>
+                  <th className="text-left py-2 px-2">Tanggal</th>
+                  <th className="text-left py-2 px-2">Kategori</th>
+                  <th className="text-left py-2 px-2">Deskripsi</th>
+                  <th className="text-left py-2 px-2">Vendor</th>
+                  <th className="text-right py-2 px-2">Jumlah (Rp)</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredExpenses.map((expense, index) => (
-                  <tr key={expense.id} className="border-b border-gray-200">
-                    <td className="py-2">{new Date(expense.date).toLocaleDateString("id-ID")}</td>
-                    <td className="py-2">{expense.category}</td>
-                    <td className="py-2">{expense.description}</td>
-                    <td className="py-2">{expense.vendor}</td>
-                    <td className="py-2">{expense.poNumber || "-"}</td>
-                    <td className="text-right py-2">{expense.amount.toLocaleString("id-ID")}</td>
-                    <td className="text-center py-2">{expense.status}</td>
+                  <tr key={expense.id} className="border-b border-gray-300">
+                    <td className="py-2 px-2">{index + 1}</td>
+                    <td className="py-2 px-2">{new Date(expense.date).toLocaleDateString("id-ID")}</td>
+                    <td className="py-2 px-2">{expense.category}</td>
+                    <td className="py-2 px-2">{expense.description}</td>
+                    <td className="py-2 px-2">{expense.vendor}</td>
+                    <td className="text-right py-2 px-2">{expense.amount.toLocaleString("id-ID")}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-300 font-bold">
-                  <td colSpan={5} className="py-2 text-right">TOTAL:</td>
-                  <td className="text-right py-2">Rp {calculateTotal().toLocaleString("id-ID")}</td>
-                  <td></td>
+                <tr className="border-t-2 border-gray-800 font-bold">
+                  <td colSpan={5} className="py-3 px-2 text-right">TOTAL:</td>
+                  <td className="text-right py-3 px-2">Rp {calculateTotal().toLocaleString("id-ID")}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-sm text-gray-600">
-            <p>Report generated on {new Date().toLocaleString("id-ID")}</p>
-            <p className="mt-2">PT Mamagreen Pacific - Confidential</p>
+          <div className="mt-12 text-sm">
+            <div className="flex justify-between">
+              <div>
+                <p>Mengetahui,</p>
+                <div className="mt-16">
+                  <p>_____________________</p>
+                  <p>Manager IT</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p>Semarang, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <div className="mt-16">
+                  <p>_____________________</p>
+                  <p>Staff IT</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
