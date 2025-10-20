@@ -137,8 +137,8 @@ export default function Reporting() {
             width: 100%;
           }
           @page {
-            size: A4;
-            margin: 20mm;
+            size: A4 landscape;
+            margin: 15mm;
           }
         }
       `}} />
@@ -213,77 +213,102 @@ export default function Reporting() {
 
       {/* Printable Report */}
       <div id="printable-report" ref={printRef} className="hidden print:block">
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Company Letterhead */}
-          <div className="border-b-2 border-gray-800 pb-4">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold">PT MAMAGREEN PACIFIC</h1>
-              <p className="text-sm mt-2">
-                Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
-              </p>
+          <div className="border-b-2 border-gray-800 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <img 
+                  src="https://mamagreen.com/wp-content/uploads/2024/10/MAMAGREEN-PRIMARY-LOGO-100px.jpg" 
+                  alt="Mamagreen Logo" 
+                  className="h-12 mb-2"
+                />
+                <h1 className="text-xl font-bold">PT MAMAGREEN PACIFIC</h1>
+                <p className="text-xs mt-1">
+                  Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
+                </p>
+              </div>
+              <div className="text-right text-xs">
+                <p>www.mamagreen.com</p>
+              </div>
             </div>
           </div>
 
           {/* Report Title */}
           <div className="text-center">
-            <h2 className="text-xl font-bold">Laporan Pengeluaran IT</h2>
+            <h2 className="text-lg font-bold">LAPORAN PENGELUARAN IT</h2>
             {filterType === "month" && selectedMonth && (
-              <p className="text-sm mt-1">
+              <p className="text-xs mt-1">
                 Periode: {new Date(selectedMonth + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
               </p>
             )}
             {filterType === "category" && selectedCategory && (
-              <p className="text-sm mt-1">Kategori: {selectedCategory}</p>
+              <p className="text-xs mt-1">Kategori: {selectedCategory}</p>
             )}
           </div>
 
           {/* Report Content */}
-          <div className="mt-6">
-            <table className="w-full text-sm border-collapse">
+          <div className="mt-4">
+            <table className="w-full text-[9px] border-collapse">
               <thead>
                 <tr className="border-b-2 border-gray-800">
-                  <th className="text-left py-2 px-2">No</th>
-                  <th className="text-left py-2 px-2">Tanggal</th>
-                  <th className="text-left py-2 px-2">Kategori</th>
-                  <th className="text-left py-2 px-2">Deskripsi</th>
-                  <th className="text-left py-2 px-2">Vendor</th>
-                  <th className="text-right py-2 px-2">Jumlah (Rp)</th>
+                  <th className="text-left py-1 px-1">No</th>
+                  <th className="text-left py-1 px-1">Tanggal</th>
+                  <th className="text-left py-1 px-1">Kategori</th>
+                  <th className="text-left py-1 px-1">Deskripsi</th>
+                  <th className="text-left py-1 px-1">Vendor</th>
+                  <th className="text-left py-1 px-1">No PO</th>
+                  <th className="text-right py-1 px-1">Harga (Rp)</th>
+                  <th className="text-left py-1 px-1">Expired Date</th>
+                  <th className="text-left py-1 px-1">Jenis Lisensi</th>
+                  <th className="text-left py-1 px-1">Status Garansi</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredExpenses.map((expense, index) => (
                   <tr key={expense.id} className="border-b border-gray-300">
-                    <td className="py-2 px-2">{index + 1}</td>
-                    <td className="py-2 px-2">{new Date(expense.date).toLocaleDateString("id-ID")}</td>
-                    <td className="py-2 px-2">{expense.category}</td>
-                    <td className="py-2 px-2">{expense.description}</td>
-                    <td className="py-2 px-2">{expense.vendor}</td>
-                    <td className="text-right py-2 px-2">{expense.amount.toLocaleString("id-ID")}</td>
+                    <td className="py-1 px-1">{index + 1}</td>
+                    <td className="py-1 px-1 whitespace-nowrap">{new Date(expense.date).toLocaleDateString("id-ID")}</td>
+                    <td className="py-1 px-1">{expense.category}</td>
+                    <td className="py-1 px-1">{expense.description}</td>
+                    <td className="py-1 px-1">{expense.vendor}</td>
+                    <td className="py-1 px-1">{expense.poNumber || "-"}</td>
+                    <td className="text-right py-1 px-1 whitespace-nowrap">{expense.amount.toLocaleString("id-ID")}</td>
+                    <td className="py-1 px-1 whitespace-nowrap">
+                      {expense.expiredWarranty 
+                        ? new Date(expense.expiredWarranty).toLocaleDateString("id-ID") 
+                        : expense.expiredSubscription 
+                          ? new Date(expense.expiredSubscription).toLocaleDateString("id-ID")
+                          : "-"}
+                    </td>
+                    <td className="py-1 px-1">{expense.licenseType || "-"}</td>
+                    <td className="py-1 px-1">{expense.warranty || "-"}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-gray-800 font-bold">
-                  <td colSpan={5} className="py-3 px-2 text-right">TOTAL:</td>
-                  <td className="text-right py-3 px-2">Rp {calculateTotal().toLocaleString("id-ID")}</td>
+                  <td colSpan={6} className="py-2 px-1 text-right">TOTAL:</td>
+                  <td className="text-right py-2 px-1">Rp {calculateTotal().toLocaleString("id-ID")}</td>
+                  <td colSpan={3}></td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
           {/* Footer */}
-          <div className="mt-12 text-sm">
+          <div className="mt-8 text-xs">
             <div className="flex justify-between">
               <div>
                 <p>Mengetahui,</p>
-                <div className="mt-16">
+                <div className="mt-12">
                   <p>_____________________</p>
                   <p>Manager IT</p>
                 </div>
               </div>
               <div className="text-right">
                 <p>Semarang, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <div className="mt-16">
+                <div className="mt-12">
                   <p>_____________________</p>
                   <p>Staff IT</p>
                 </div>
