@@ -8,6 +8,13 @@
       "when": 1760666241206,
       "tag": "0000_typical_inhumans",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1760941733338,
+      "tag": "0001_peaceful_kabuki",
+      "breakpoints": true
     }
   ]
 }
