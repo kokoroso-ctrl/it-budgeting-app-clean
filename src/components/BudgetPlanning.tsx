@@ -102,8 +102,7 @@ export default function BudgetPlanning() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          status: newStatus,
-          approver: newStatus === 'approved' ? 'Jane Doe' : null
+          status: newStatus
         }),
       });
 
@@ -189,11 +188,11 @@ export default function BudgetPlanning() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount ($)</Label>
+                  <Label htmlFor="amount">Jumlah (Rp)</Label>
                   <Input
                     id="amount"
                     type="number"
-                    placeholder="e.g., 100000"
+                    placeholder="e.g., 100000000"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     required
@@ -326,7 +325,7 @@ export default function BudgetPlanning() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Amount</p>
-                    <p className="font-medium text-lg">${(budget.amount / 1000).toFixed(0)}K</p>
+                    <p className="font-medium text-lg">Rp {(budget.amount / 1000000).toFixed(0)}Jt</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Approver</p>
