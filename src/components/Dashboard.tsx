@@ -662,6 +662,7 @@ export default function Dashboard() {
                     <TableHead>Deskripsi</TableHead>
                     <TableHead>Vendor</TableHead>
                     <TableHead>No PO</TableHead>
+                    <TableHead className="text-right">Harga</TableHead>
                     <TableHead>Status Garansi</TableHead>
                     <TableHead>Expired Garansi</TableHead>
                     <TableHead>Jenis Lisensi</TableHead>
@@ -678,6 +679,7 @@ export default function Dashboard() {
                       <TableCell>{expense.description}</TableCell>
                       <TableCell>{expense.vendor}</TableCell>
                       <TableCell>{expense.poNumber || "-"}</TableCell>
+                      <TableCell className="text-right font-medium">Rp {expense.amount.toLocaleString('id-ID')}</TableCell>
                       <TableCell>{expense.warranty || "-"}</TableCell>
                       <TableCell>{expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}</TableCell>
                       <TableCell>{expense.licenseType || "-"}</TableCell>
