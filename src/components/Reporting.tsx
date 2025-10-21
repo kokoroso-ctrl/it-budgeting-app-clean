@@ -297,23 +297,9 @@ export default function Reporting() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-xs">
-            <div className="flex justify-between">
-              <div>
-                <p>Mengetahui,</p>
-                <div className="mt-12">
-                  <p>_____________________</p>
-                  <p>Manager IT</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p>Semarang, {new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <div className="mt-12">
-                  <p>_____________________</p>
-                  <p>Staff IT</p>
-                </div>
-              </div>
-            </div>
+          <div className="mt-4 text-xs">
+            <p className="font-bold">Total Pengeluaran: Rp {calculateTotal().toLocaleString("id-ID")}</p>
+            <p>Jumlah Transaksi: {filteredExpenses.length}</p>
           </div>
         </div>
       </div>
