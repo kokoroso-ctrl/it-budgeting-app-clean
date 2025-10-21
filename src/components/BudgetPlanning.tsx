@@ -24,6 +24,7 @@ export default function BudgetPlanning() {
     category: "Hardware",
     amount: "",
     description: "",
+    approver: "",
   });
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function BudgetPlanning() {
         amount: parseFloat(formData.amount),
         status: "draft",
         createdBy: "Current User",
-        approver: null,
+        approver: formData.approver || null,
         description: formData.description || null,
       };
 
@@ -84,6 +85,7 @@ export default function BudgetPlanning() {
         category: "Hardware",
         amount: "",
         description: "",
+        approver: "",
       });
     } catch (err: any) {
       setError(err.message || 'An error occurred');
@@ -253,6 +255,16 @@ export default function BudgetPlanning() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="approver">Approver</Label>
+                <Input
+                  id="approver"
+                  placeholder="e.g., Jane Doe, John Smith"
+                  value={formData.approver}
+                  onChange={(e) => setFormData({ ...formData, approver: e.target.value })}
                 />
               </div>
 

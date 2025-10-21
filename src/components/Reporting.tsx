@@ -112,6 +112,17 @@ export default function Reporting() {
     return filteredExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
   };
 
+  const calculateCategorySummary = () => {
+    const summary: { [key: string]: number } = {};
+    filteredExpenses.forEach((exp) => {
+      if (!summary[exp.category]) {
+        summary[exp.category] = 0;
+      }
+      summary[exp.category] += exp.amount || 0;
+    });
+    return Object.entries(summary).map(([category, total]) => ({ category, total }));
+  };
+
   const months = Array.from(new Set(expenses.map((exp) => {
     const d = new Date(exp.date);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -208,6 +219,21 @@ export default function Reporting() {
           <div className="text-sm text-muted-foreground">
             Total Records: {filteredExpenses.length} | Total Amount: Rp {calculateTotal().toLocaleString("id-ID")}
           </div>
+
+          {/* Category Summary */}
+          {filteredExpenses.length > 0 && (
+            <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <h3 className="font-semibold text-sm mb-3">Ringkasan Total Pengeluaran per Kategori</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {calculateCategorySummary().map(({ category, total }) => (
+                  <div key={category} className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">{category}:</span>
+                    <span className="font-semibold">Rp {total.toLocaleString("id-ID")}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -259,9 +285,9 @@ export default function Reporting() {
                   <th className="text-left py-1 px-1">Vendor</th>
                   <th className="text-left py-1 px-1">No PO</th>
                   <th className="text-right py-1 px-1">Harga (Rp)</th>
-                  <th className="text-left py-1 px-1">Expired Date</th>
-                  <th className="text-left py-1 px-1">Jenis Lisensi</th>
                   <th className="text-left py-1 px-1">Status Garansi</th>
+                  <th className="text-left py-1 px-1">Jenis Lisensi</th>
+                  <th className="text-left py-1 px-1">Expired Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,6 +300,8 @@ export default function Reporting() {
                     <td className="py-1 px-1">{expense.vendor}</td>
                     <td className="py-1 px-1">{expense.poNumber || "-"}</td>
                     <td className="text-right py-1 px-1 whitespace-nowrap">{expense.amount.toLocaleString("id-ID")}</td>
+                    <td className="py-1 px-1">{expense.warranty || "-"}</td>
+                    <td className="py-1 px-1">{expense.licenseType || "-"}</td>
                     <td className="py-1 px-1 whitespace-nowrap">
                       {expense.expiredWarranty 
                         ? new Date(expense.expiredWarranty).toLocaleDateString("id-ID") 
@@ -281,8 +309,6 @@ export default function Reporting() {
                           ? new Date(expense.expiredSubscription).toLocaleDateString("id-ID")
                           : "-"}
                     </td>
-                    <td className="py-1 px-1">{expense.licenseType || "-"}</td>
-                    <td className="py-1 px-1">{expense.warranty || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -296,10 +322,24 @@ export default function Reporting() {
             </table>
           </div>
 
-          {/* Footer */}
+          {/* Footer with Category Summary */}
           <div className="mt-4 text-xs">
             <p className="font-bold">Total Pengeluaran: Rp {calculateTotal().toLocaleString("id-ID")}</p>
             <p>Jumlah Transaksi: {filteredExpenses.length}</p>
+            
+            {/* Category Summary in Print */}
+            {filteredExpenses.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-300">
+                <p className="font-bold mb-2">Ringkasan per Kategori:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {calculateCategorySummary().map(({ category, total }) => (
+                    <div key={category}>
+                      <span className="font-medium">{category}:</span> Rp {total.toLocaleString("id-ID")}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
