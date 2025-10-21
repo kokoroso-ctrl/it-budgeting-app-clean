@@ -326,7 +326,7 @@ export default function Dashboard() {
       {/* Filters Section */}
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="period-filter" className="text-sm font-medium">Periode</Label>
               <Select value={periodFilter} onValueChange={setPeriodFilter}>
@@ -359,19 +359,6 @@ export default function Dashboard() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Aksi</Label>
-              <Button 
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => {
-                  // Refresh or navigate to report
-                  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                }}
-              >
-                Buka Laporan
-              </Button>
             </div>
           </div>
         </CardContent>
