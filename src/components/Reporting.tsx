@@ -10,26 +10,26 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const forecastData = [
-  { month: "Jan", actual: 115000, forecast: 120000 },
-  { month: "Feb", actual: 125000, forecast: 120000 },
-  { month: "Mar", actual: 118000, forecast: 120000 },
-  { month: "Apr", actual: 122000, forecast: 120000 },
-  { month: "May", actual: 119000, forecast: 120000 },
-  { month: "Jun", actual: 123000, forecast: 120000 },
-  { month: "Jul", actual: null, forecast: 121000 },
-  { month: "Aug", actual: null, forecast: 122000 },
-  { month: "Sep", actual: null, forecast: 119000 },
-  { month: "Oct", actual: null, forecast: 120000 },
-  { month: "Nov", actual: null, forecast: 123000 },
-  { month: "Dec", actual: null, forecast: 125000 },
+  { month: "Jan", actual: 1725000000, forecast: 1800000000 },
+  { month: "Feb", actual: 1875000000, forecast: 1800000000 },
+  { month: "Mar", actual: 1770000000, forecast: 1800000000 },
+  { month: "Apr", actual: 1830000000, forecast: 1800000000 },
+  { month: "May", actual: 1785000000, forecast: 1800000000 },
+  { month: "Jun", actual: 1845000000, forecast: 1800000000 },
+  { month: "Jul", actual: null, forecast: 1815000000 },
+  { month: "Aug", actual: null, forecast: 1830000000 },
+  { month: "Sep", actual: null, forecast: 1785000000 },
+  { month: "Oct", actual: null, forecast: 1800000000 },
+  { month: "Nov", actual: null, forecast: 1845000000 },
+  { month: "Dec", actual: null, forecast: 1875000000 },
 ];
 
 const varianceData = [
-  { category: "Hardware", budget: 320000, actual: 285000, variance: 35000, variancePercent: 10.9 },
-  { category: "Software", budget: 280000, actual: 265000, variance: 15000, variancePercent: 5.4 },
-  { category: "Personnel", budget: 520000, actual: 500000, variance: 20000, variancePercent: 3.8 },
-  { category: "Services", budget: 180000, actual: 195000, variance: -15000, variancePercent: -8.3 },
-  { category: "Infrastructure", budget: 450000, actual: 420000, variance: 30000, variancePercent: 6.7 },
+  { category: "Hardware", budget: 4800000000, actual: 4275000000, variance: 525000000, variancePercent: 10.9 },
+  { category: "Software", budget: 4200000000, actual: 3975000000, variance: 225000000, variancePercent: 5.4 },
+  { category: "Personnel", budget: 7800000000, actual: 7500000000, variance: 300000000, variancePercent: 3.8 },
+  { category: "Services", budget: 2700000000, actual: 2925000000, variance: -225000000, variancePercent: -8.3 },
+  { category: "Infrastructure", budget: 6750000000, actual: 6300000000, variance: 450000000, variancePercent: 6.7 },
 ];
 
 const alerts = [
@@ -37,24 +37,41 @@ const alerts = [
     id: 1,
     type: "overrun",
     category: "Services",
-    message: "Services category exceeded budget by $15,000",
+    message: "Kategori Services melebihi anggaran sebesar Rp 225.000.000",
     severity: "high",
   },
   {
     id: 2,
     type: "warning",
     category: "Software",
-    message: "Software spending at 94.6% of budget",
+    message: "Pengeluaran Software mencapai 94,6% dari anggaran",
     severity: "medium",
   },
   {
     id: 3,
     type: "info",
     category: "Hardware",
-    message: "Hardware spending 10.9% under budget",
+    message: "Pengeluaran Hardware 10,9% di bawah anggaran",
     severity: "low",
   },
 ];
+
+// Custom Tooltip for better formatting
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="font-semibold text-sm mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: Rp {(entry.value / 1000000).toFixed(0)}Jt
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Reporting() {
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -156,16 +173,16 @@ export default function Reporting() {
 
       <div className="flex justify-between items-center print:hidden">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Reports & Analytics</h2>
-          <p className="text-muted-foreground">Expense reports and budget analysis</p>
+          <h2 className="text-3xl font-bold tracking-tight">Laporan & Analitik</h2>
+          <p className="text-muted-foreground">Laporan pengeluaran dan analisis anggaran</p>
         </div>
       </div>
 
       {/* Expense Report Section */}
       <Card className="print:hidden">
         <CardHeader>
-          <CardTitle>Expense Report</CardTitle>
-          <CardDescription>Filter and print expense reports</CardDescription>
+          <CardTitle>Laporan Pengeluaran</CardTitle>
+          <CardDescription>Filter dan cetak laporan pengeluaran</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
@@ -344,7 +361,7 @@ export default function Reporting() {
         </div>
       </div>
 
-      {/* Existing Analytics Sections - Hidden on Print */}
+      {/* Analytics Sections */}
       <div className="print:hidden">
         {/* Alerts Section */}
         <div className="grid gap-4 md:grid-cols-3">
@@ -370,53 +387,55 @@ export default function Reporting() {
         {/* Forecast Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Budget Forecast</CardTitle>
-            <CardDescription>Actual vs forecasted spending for 2024</CardDescription>
+            <CardTitle>Ramalan Anggaran</CardTitle>
+            <CardDescription>Pengeluaran aktual vs ramalan untuk tahun 2024</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
               <LineChart data={forecastData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
+                <YAxis tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`} />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Line
                   type="monotone"
                   dataKey="actual"
-                  stroke="hsl(var(--chart-1))"
-                  strokeWidth={2}
-                  name="Actual"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  name="Aktual"
                   connectNulls={false}
+                  dot={{ fill: "#10b981", r: 4 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="forecast"
-                  stroke="hsl(var(--chart-2))"
-                  strokeWidth={2}
+                  stroke="#6366f1"
+                  strokeWidth={3}
                   strokeDasharray="5 5"
-                  name="Forecast"
+                  name="Ramalan"
+                  dot={{ fill: "#6366f1", r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Variance Report */}
+        {/* Variance Report Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Budget Variance Report</CardTitle>
-            <CardDescription>Detailed breakdown by category</CardDescription>
+            <CardTitle>Laporan Varians Anggaran</CardTitle>
+            <CardDescription>Rincian detail per kategori</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Budget</TableHead>
-                  <TableHead className="text-right">Actual</TableHead>
-                  <TableHead className="text-right">Variance</TableHead>
-                  <TableHead className="text-right">Variance %</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead className="text-right">Anggaran</TableHead>
+                  <TableHead className="text-right">Aktual</TableHead>
+                  <TableHead className="text-right">Varians</TableHead>
+                  <TableHead className="text-right">Varians %</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -424,19 +443,19 @@ export default function Reporting() {
                 {varianceData.map((item) => (
                   <TableRow key={item.category}>
                     <TableCell className="font-medium">{item.category}</TableCell>
-                    <TableCell className="text-right">${item.budget.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${item.actual.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">Rp {(item.budget / 1000000).toFixed(0)}Jt</TableCell>
+                    <TableCell className="text-right">Rp {(item.actual / 1000000).toFixed(0)}Jt</TableCell>
                     <TableCell className={`text-right font-medium ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                      ${Math.abs(item.variance).toLocaleString()}
+                      Rp {(Math.abs(item.variance) / 1000000).toFixed(0)}Jt
                     </TableCell>
                     <TableCell className={`text-right ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
                       {item.variancePercent > 0 ? '+' : ''}{item.variancePercent}%
                     </TableCell>
                     <TableCell>
                       {item.variance < 0 ? (
-                        <Badge variant="destructive">Over Budget</Badge>
+                        <Badge variant="destructive">Melebihi Anggaran</Badge>
                       ) : (
-                        <Badge className="bg-green-500">Under Budget</Badge>
+                        <Badge className="bg-green-500">Di Bawah Anggaran</Badge>
                       )}
                     </TableCell>
                   </TableRow>
@@ -446,22 +465,59 @@ export default function Reporting() {
           </CardContent>
         </Card>
 
-        {/* Variance Chart */}
+        {/* Beautiful Variance Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Variance Visualization</CardTitle>
-            <CardDescription>Budget vs actual spending by category</CardDescription>
+            <CardTitle>Visualisasi Varians</CardTitle>
+            <CardDescription>Anggaran vs pengeluaran aktual per kategori</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={varianceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="budget" fill="hsl(var(--chart-1))" name="Budget" />
-                <Bar dataKey="actual" fill="hsl(var(--chart-2))" name="Actual" />
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart 
+                data={varianceData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                barGap={8}
+              >
+                <defs>
+                  <linearGradient id="budgetGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
+                  </linearGradient>
+                  <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis 
+                  dataKey="category" 
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#d1d5db' }}
+                />
+                <YAxis 
+                  tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                  axisLine={{ stroke: '#d1d5db' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="circle"
+                />
+                <Bar 
+                  dataKey="budget" 
+                  fill="url(#budgetGradient)" 
+                  name="Anggaran" 
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={60}
+                />
+                <Bar 
+                  dataKey="actual" 
+                  fill="url(#actualGradient)" 
+                  name="Aktual" 
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={60}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
