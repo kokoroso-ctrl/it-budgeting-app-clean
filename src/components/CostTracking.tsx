@@ -4,17 +4,25 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, Filter, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function CostTracking() {
   const [vendors, setVendors] = useState<any[]>([]);
+  const [filteredVendors, setFilteredVendors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
   useEffect(() => {
     fetchVendors();
   }, []);
+
+  useEffect(() => {
+    filterVendors();
+  }, [vendors, searchTerm, categoryFilter]);
 
   const fetchVendors = async () => {
     try {
@@ -30,6 +38,25 @@ export default function CostTracking() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filterVendors = () => {
+    let filtered = [...vendors];
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(vendor =>
+        vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vendor.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by category
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(vendor => vendor.category === categoryFilter);
+    }
+
+    setFilteredVendors(filtered);
   };
 
   const handleStatusChange = async (id: number, newStatus: string) => {
@@ -52,6 +79,13 @@ export default function CostTracking() {
       console.error('Status update error:', err);
     }
   };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("all");
+  };
+
+  const uniqueCategories = Array.from(new Set(vendors.map(v => v.category)));
 
   return (
     <div className="space-y-6">
@@ -76,14 +110,35 @@ export default function CostTracking() {
               <CardDescription>Ringkasan vendor dan kontrak mereka</CardDescription>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <Search className="h-4 w-4 mr-1" />
-                Cari
-              </Button>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-1" />
-                Filter
-              </Button>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari vendor atau kategori..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-[250px]"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {uniqueCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(searchTerm || categoryFilter !== "all") && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -92,9 +147,11 @@ export default function CostTracking() {
             <div className="flex items-center justify-center py-8">
               <div className="text-muted-foreground">Memuat vendor...</div>
             </div>
-          ) : vendors.length === 0 ? (
+          ) : filteredVendors.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Tidak ada vendor ditemukan</div>
+              <div className="text-muted-foreground">
+                {vendors.length === 0 ? "Tidak ada vendor ditemukan" : "Tidak ada hasil yang cocok dengan filter"}
+              </div>
             </div>
           ) : (
             <Table>
@@ -108,7 +165,7 @@ export default function CostTracking() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vendors.map((vendor) => (
+                {filteredVendors.map((vendor) => (
                   <TableRow key={vendor.id}>
                     <TableCell className="font-medium">{vendor.name}</TableCell>
                     <TableCell>{vendor.category}</TableCell>
