@@ -114,18 +114,24 @@ export default function Dashboard() {
     if (typeof dateValue === 'number') {
       // Excel serial date to JS Date
       // Excel dates are days since 1900-01-01 (with leap year bug)
-      // JavaScript dates are milliseconds since 1970-01-01
-      const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899 (accounting for Excel's leap year bug)
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // Dec 30, 1899 UTC
       const jsDate = new Date(excelEpoch.getTime() + dateValue * 86400000);
       
       if (!isNaN(jsDate.getTime())) {
+        // Return ISO string in UTC to avoid timezone shift
         return jsDate.toISOString();
       }
     }
     
     // If it's already a Date object
     if (dateValue instanceof Date) {
-      return dateValue.toISOString();
+      // Use UTC to avoid timezone shift
+      const utcDate = new Date(Date.UTC(
+        dateValue.getFullYear(),
+        dateValue.getMonth(),
+        dateValue.getDate()
+      ));
+      return utcDate.toISOString();
     }
     
     // If it's a string in DD/MM/YYYY format
@@ -133,17 +139,24 @@ export default function Dashboard() {
       const parts = dateValue.split('/');
       if (parts.length === 3) {
         const [day, month, year] = parts;
-        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        // Use UTC to avoid timezone shift
+        const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
         if (!isNaN(date.getTime())) {
           return date.toISOString();
         }
       }
     }
     
-    // Try parsing as general date string
-    const date = new Date(dateValue);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString();
+    // Try parsing as general date string with UTC
+    const parsedDate = new Date(dateValue);
+    if (!isNaN(parsedDate.getTime())) {
+      // Convert to UTC date at midnight to avoid timezone shift
+      const utcDate = new Date(Date.UTC(
+        parsedDate.getFullYear(),
+        parsedDate.getMonth(),
+        parsedDate.getDate()
+      ));
+      return utcDate.toISOString();
     }
     
     return null;
