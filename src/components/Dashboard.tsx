@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileDown, Pencil, Trash2, Plus, Search } from "lucide-react";
+import { Download, FileDown, Pencil, Trash2, Plus, Search, Upload } from "lucide-react";
 import { Pie, PieChart, Line, LineChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
+import { toast } from "sonner";
 
 const COLORS = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -22,6 +23,8 @@ export default function Dashboard() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Filter states
   const [periodFilter, setPeriodFilter] = useState("all");
@@ -54,6 +57,7 @@ export default function Dashboard() {
       setExpenses(data);
     } catch (err) {
       console.error('Fetch expenses error:', err);
+      toast.error("Gagal memuat data transaksi");
     } finally {
       setIsLoading(false);
     }
@@ -72,6 +76,143 @@ export default function Dashboard() {
     const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  };
+
+  // Parse date from Excel format (DD/MM/YYYY or other formats)
+  const parseExcelDate = (dateValue: any): string | null => {
+    if (!dateValue) return null;
+    
+    // If it's already a Date object
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString();
+    }
+    
+    // If it's a string in DD/MM/YYYY format
+    if (typeof dateValue === 'string') {
+      const parts = dateValue.split('/');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      }
+    }
+    
+    // Try parsing as general date string
+    const date = new Date(dateValue);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+    
+    return null;
+  };
+
+  // Handle XLSX import
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      toast.info("Memproses file XLSX...");
+
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.error("File XLSX kosong");
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row: any = jsonData[i];
+        
+        try {
+          // Map Excel columns to API fields
+          const expenseData: any = {
+            date: parseExcelDate(row['Tanggal']),
+            category: row['Kategori'],
+            description: row['Deskripsi'],
+            vendor: row['Vendor'],
+            poNumber: row['No PO'] || '',
+            amount: parseFloat(String(row['Harga'] || 0)),
+            status: row['Status'] || 'pending',
+          };
+
+          // Optional fields
+          if (row['Status Garansi']) {
+            expenseData.warranty = row['Status Garansi'];
+          }
+          if (row['Expired Garansi']) {
+            expenseData.expiredWarranty = parseExcelDate(row['Expired Garansi']);
+          }
+          if (row['Jenis Lisensi']) {
+            expenseData.licenseType = row['Jenis Lisensi'];
+          }
+          if (row['Expired Lisensi']) {
+            expenseData.expiredSubscription = parseExcelDate(row['Expired Lisensi']);
+          }
+
+          // Validate required fields
+          if (!expenseData.date || !expenseData.category || !expenseData.description || 
+              !expenseData.vendor || !expenseData.amount || expenseData.amount <= 0) {
+            errors.push(`Baris ${i + 2}: Data tidak lengkap atau tidak valid`);
+            errorCount++;
+            continue;
+          }
+
+          // Send to API
+          const response = await fetch('/api/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(expenseData),
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            const error = await response.json();
+            errors.push(`Baris ${i + 2}: ${error.error || 'Gagal menyimpan'}`);
+            errorCount++;
+          }
+        } catch (err: any) {
+          errors.push(`Baris ${i + 2}: ${err.message}`);
+          errorCount++;
+        }
+      }
+
+      // Show results
+      await fetchExpenses();
+      
+      if (successCount > 0 && errorCount === 0) {
+        toast.success(`Berhasil mengimport ${successCount} transaksi`);
+      } else if (successCount > 0 && errorCount > 0) {
+        toast.warning(`${successCount} transaksi berhasil, ${errorCount} gagal. Periksa console untuk detail.`);
+        console.error("Import errors:", errors);
+      } else {
+        toast.error(`Gagal mengimport semua transaksi. ${errors[0]}`);
+        console.error("Import errors:", errors);
+      }
+    } catch (err: any) {
+      console.error('Import error:', err);
+      toast.error("Gagal memproses file XLSX: " + err.message);
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   // Filter expenses based on period, category, and search
@@ -114,7 +255,7 @@ export default function Dashboard() {
   ).sort().reverse();
 
   // Get unique categories
-  const categories = ["Hardware", "Software", "Website", "Services", "Infrastructure"];
+  const categories = ["Hardware", "Software", "Website", "Services", "Infrastructure", "Accessories & Office Supply"];
 
   // Export to Excel
   const handleExportExcel = () => {
@@ -136,6 +277,7 @@ export default function Dashboard() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
     XLSX.writeFile(wb, `Transaksi_Pengeluaran_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success("File XLSX berhasil didownload");
   };
 
   const handleEdit = (expense: any) => {
@@ -166,8 +308,10 @@ export default function Dashboard() {
 
       if (!response.ok) throw new Error('Failed to delete expense');
       await fetchExpenses();
+      toast.success("Transaksi berhasil dihapus");
     } catch (err) {
       console.error('Delete error:', err);
+      toast.error("Gagal menghapus transaksi");
     }
   };
 
@@ -204,6 +348,7 @@ export default function Dashboard() {
         });
 
         if (!response.ok) throw new Error('Failed to update expense');
+        toast.success("Transaksi berhasil diupdate");
       } else {
         const response = await fetch('/api/expenses', {
           method: 'POST',
@@ -212,6 +357,7 @@ export default function Dashboard() {
         });
 
         if (!response.ok) throw new Error('Failed to create expense');
+        toast.success("Transaksi berhasil ditambahkan");
       }
 
       await fetchExpenses();
@@ -219,6 +365,7 @@ export default function Dashboard() {
       resetForm();
     } catch (err: any) {
       console.error('Submit error:', err);
+      toast.error(isEditMode ? "Gagal mengupdate transaksi" : "Gagal menambahkan transaksi");
     } finally {
       setIsSubmitting(false);
     }
@@ -258,8 +405,10 @@ export default function Dashboard() {
 
       if (!response.ok) throw new Error('Failed to update status');
       await fetchExpenses();
+      toast.success("Status berhasil diupdate");
     } catch (err) {
       console.error('Status update error:', err);
+      toast.error("Gagal mengupdate status");
     }
   };
 
@@ -466,13 +615,29 @@ export default function Dashboard() {
               <CardDescription>Riwayat transaksi pengeluaran</CardDescription>
             </div>
             <div className="flex space-x-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileImport}
+                className="hidden"
+              />
+              <Button 
+                variant="outline" 
+                onClick={handleImportClick}
+                disabled={isImporting}
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {isImporting ? "Importing..." : "Import XLSX"}
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={handleExportExcel}
                 className="border-green-600 text-green-600 hover:bg-green-50"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export CSV
+                Export XLSX
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogTrigger asChild>
@@ -536,6 +701,7 @@ export default function Dashboard() {
                             <SelectItem value="Website">Website</SelectItem>
                             <SelectItem value="Services">Services</SelectItem>
                             <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                            <SelectItem value="Accessories & Office Supply">Accessories & Office Supply</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
