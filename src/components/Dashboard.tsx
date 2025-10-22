@@ -167,34 +167,46 @@ export default function Dashboard() {
         const row: any = jsonData[i];
         
         try {
+          // Helper function to clean empty values
+          const cleanValue = (value: any): string | null => {
+            if (!value || value === '-' || value === '' || value === 'null') return null;
+            return value;
+          };
+
           // Map Excel columns to API fields
           const expenseData: any = {
             date: parseExcelDate(row['Tanggal']),
             category: row['Kategori'],
             description: row['Deskripsi'],
             vendor: row['Vendor'],
-            poNumber: row['No PO'] || '',
+            poNumber: cleanValue(row['No PO']) || '',
             amount: parseFloat(String(row['Harga'] || 0)),
             status: row['Status'] || 'pending',
           };
 
           // Only include warranty fields for Hardware category
           if (expenseData.category === "Hardware") {
-            if (row['Status Garansi']) {
-              expenseData.warranty = row['Status Garansi'];
+            const warrantyValue = cleanValue(row['Status Garansi']);
+            const expiredWarrantyValue = cleanValue(row['Expired Garansi']);
+            
+            if (warrantyValue) {
+              expenseData.warranty = warrantyValue;
             }
-            if (row['Expired Garansi']) {
-              expenseData.expiredWarranty = parseExcelDate(row['Expired Garansi']);
+            if (expiredWarrantyValue) {
+              expenseData.expiredWarranty = parseExcelDate(expiredWarrantyValue);
             }
           }
 
           // Only include license fields for Software/Website categories
           if (expenseData.category === "Software" || expenseData.category === "Website") {
-            if (row['Jenis Lisensi']) {
-              expenseData.licenseType = row['Jenis Lisensi'];
+            const licenseTypeValue = cleanValue(row['Jenis Lisensi']);
+            const expiredLicenseValue = cleanValue(row['Expired Lisensi']);
+            
+            if (licenseTypeValue) {
+              expenseData.licenseType = licenseTypeValue;
             }
-            if (row['Expired Lisensi']) {
-              expenseData.expiredSubscription = parseExcelDate(row['Expired Lisensi']);
+            if (expiredLicenseValue) {
+              expenseData.expiredSubscription = parseExcelDate(expiredLicenseValue);
             }
           }
 
