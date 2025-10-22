@@ -113,11 +113,10 @@ export default function Dashboard() {
     // If it's a number, it's likely an Excel serial date
     if (typeof dateValue === 'number') {
       // Excel serial date to JS Date
-      // Excel counts from 1900-01-01 (with 25569 offset for Unix epoch)
-      const utc_days = Math.floor(dateValue - 25569);
-      const utc_value = utc_days * 86400;
-      const date_info = new Date(utc_value * 1000);
-      const jsDate = new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate());
+      // Excel dates are days since 1900-01-01 (with leap year bug)
+      // JavaScript dates are milliseconds since 1970-01-01
+      const excelEpoch = new Date(1899, 11, 30); // Dec 30, 1899 (accounting for Excel's leap year bug)
+      const jsDate = new Date(excelEpoch.getTime() + dateValue * 86400000);
       
       if (!isNaN(jsDate.getTime())) {
         return jsDate.toISOString();
