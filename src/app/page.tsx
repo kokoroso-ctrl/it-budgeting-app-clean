@@ -51,7 +51,7 @@ export default function Home() {
   const navigation = [
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
     { id: "planning", name: "Budget Planning", icon: FileText },
-    { id: "tracking", name: "Cost Tracking", icon: Receipt },
+    { id: "tracking", name: "Vendor Tracking", icon: Receipt },
     { id: "reporting", name: "Reports & Analytics", icon: BarChart3 },
   ];
 
