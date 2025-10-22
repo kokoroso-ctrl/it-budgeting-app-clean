@@ -358,14 +358,26 @@ export default function Dashboard() {
         poNumber: formData.poNumber,
       };
 
+      // Only include relevant fields based on category
+      // Send null explicitly for irrelevant fields to clear them in database
       if (formData.category === "Hardware") {
         payload.warranty = formData.warranty || null;
         payload.expiredWarranty = formData.expiredWarranty ? new Date(formData.expiredWarranty).toISOString() : null;
-      }
-
-      if (formData.category === "Software" || formData.category === "Website") {
+        // Clear license fields
+        payload.licenseType = null;
+        payload.expiredSubscription = null;
+      } else if (formData.category === "Software" || formData.category === "Website") {
         payload.licenseType = formData.licenseType || null;
         payload.expiredSubscription = formData.expiredSubscription ? new Date(formData.expiredSubscription).toISOString() : null;
+        // Clear warranty fields
+        payload.warranty = null;
+        payload.expiredWarranty = null;
+      } else {
+        // For other categories, clear all optional fields
+        payload.warranty = null;
+        payload.expiredWarranty = null;
+        payload.licenseType = null;
+        payload.expiredSubscription = null;
       }
 
       if (isEditMode && editingId !== null) {
