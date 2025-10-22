@@ -3,194 +3,39 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, Pencil, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const mockExpenses = [
-  { id: 1, date: "2024-01-15", vendor: "AWS", category: "Infrastructure", amount: 15000, description: "Cloud hosting - January", status: "approved", poNumber: "PO-2024-001" },
-  { id: 2, date: "2024-01-20", vendor: "Microsoft", category: "Software", amount: 8500, description: "Office 365 licenses", status: "approved", poNumber: "PO-2024-002", licenseType: "Subscription", expiredSubscription: "2024-12-31" },
-  { id: 3, date: "2024-02-05", vendor: "Dell", category: "Hardware", amount: 25000, description: "Laptop refresh program", status: "pending", poNumber: "PO-2024-003", warranty: "Ada", expiredWarranty: "2027-02-05" },
-  { id: 4, date: "2024-02-10", vendor: "Cisco", category: "Infrastructure", amount: 12000, description: "Network equipment", status: "approved", poNumber: "PO-2024-004" },
-  { id: 5, date: "2024-02-15", vendor: "Salesforce", category: "Software", amount: 18000, description: "CRM subscription", status: "approved", poNumber: "PO-2024-005", licenseType: "Subscription", expiredSubscription: "2024-12-31" },
-  { id: 6, date: "2024-03-01", vendor: "Google Cloud", category: "Infrastructure", amount: 9500, description: "Cloud services", status: "pending", poNumber: "PO-2024-006" },
-];
-
-const mockVendors = [
-  { id: 1, name: "AWS", category: "Infrastructure", totalSpent: 45000, contracts: 3, status: "active" },
-  { id: 2, name: "Microsoft", category: "Software", totalSpent: 32000, contracts: 5, status: "active" },
-  { id: 3, name: "Dell", category: "Hardware", totalSpent: 78000, contracts: 2, status: "active" },
-  { id: 4, name: "Cisco", category: "Infrastructure", totalSpent: 54000, contracts: 4, status: "active" },
-  { id: 5, name: "Salesforce", category: "Software", totalSpent: 36000, contracts: 2, status: "active" },
-];
 
 export default function CostTracking() {
-  const [expenses, setExpenses] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
-    date: "",
-    vendor: "",
-    category: "Hardware",
-    amount: "",
-    description: "",
-    poNumber: "",
-    warranty: "",
-    expiredWarranty: "",
-    licenseType: "",
-    expiredSubscription: "",
-  });
 
-  // Fetch expenses and vendors on mount
   useEffect(() => {
-    fetchExpenses();
     fetchVendors();
   }, []);
 
-  const fetchExpenses = async () => {
+  const fetchVendors = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/expenses?sort=date&order=desc');
-      if (!response.ok) throw new Error('Failed to fetch expenses');
-      const data = await response.json();
-      setExpenses(data);
-    } catch (err) {
-      setError('Failed to load expenses. Please try again.');
-      console.error('Fetch expenses error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchVendors = async () => {
-    try {
       const response = await fetch('/api/vendors?sort=totalSpent&order=desc');
-      if (!response.ok) throw new Error('Failed to fetch vendors');
+      if (!response.ok) throw new Error('Gagal memuat vendor');
       const data = await response.json();
       setVendors(data);
     } catch (err) {
+      setError('Gagal memuat vendor. Silakan coba lagi.');
       console.error('Fetch vendors error:', err);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const payload: any = {
-        date: new Date(formData.date).toISOString(),
-        vendor: formData.vendor,
-        category: formData.category,
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        status: isEditMode ? undefined : "pending",
-        poNumber: formData.poNumber,
-      };
-
-      if (formData.category === "Hardware") {
-        payload.warranty = formData.warranty || null;
-        payload.expiredWarranty = formData.expiredWarranty ? new Date(formData.expiredWarranty).toISOString() : null;
-      }
-
-      if (formData.category === "Software" || formData.category === "Website") {
-        payload.licenseType = formData.licenseType || null;
-        payload.expiredSubscription = formData.expiredSubscription ? new Date(formData.expiredSubscription).toISOString() : null;
-      }
-
-      if (isEditMode && editingId !== null) {
-        // Update existing expense
-        const response = await fetch(`/api/expenses?id=${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update expense');
-        }
-      } else {
-        // Create new expense
-        const response = await fetch('/api/expenses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create expense');
-        }
-      }
-
-      // Refresh data
-      await fetchExpenses();
-      setIsDialogOpen(false);
-      resetForm();
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-      console.error('Submit error:', err);
     } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEdit = (expense: any) => {
-    setIsEditMode(true);
-    setEditingId(expense.id);
-    setFormData({
-      date: expense.date.split('T')[0],
-      vendor: expense.vendor,
-      category: expense.category,
-      amount: expense.amount.toString(),
-      description: expense.description,
-      poNumber: expense.poNumber,
-      warranty: expense.warranty || "",
-      expiredWarranty: expense.expiredWarranty ? expense.expiredWarranty.split('T')[0] : "",
-      licenseType: expense.licenseType || "",
-      expiredSubscription: expense.expiredSubscription ? expense.expiredSubscription.split('T')[0] : "",
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
-
-    try {
-      setError(null);
-      const response = await fetch(`/api/expenses?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete expense');
-      }
-
-      await fetchExpenses();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete expense');
-      console.error('Delete error:', err);
+      setIsLoading(false);
     }
   };
 
   const handleStatusChange = async (id: number, newStatus: string) => {
     try {
       setError(null);
-      const response = await fetch(`/api/expenses?id=${id}`, {
+      const response = await fetch(`/api/vendors?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -198,214 +43,23 @@ export default function CostTracking() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update status');
+        throw new Error(errorData.error || 'Gagal mengubah status');
       }
 
-      await fetchExpenses();
+      await fetchVendors();
     } catch (err: any) {
-      setError(err.message || 'Failed to update status');
+      setError(err.message || 'Gagal mengubah status');
       console.error('Status update error:', err);
     }
-  };
-
-  const resetForm = () => {
-    setIsEditMode(false);
-    setEditingId(null);
-    setFormData({
-      date: "",
-      vendor: "",
-      category: "Hardware",
-      amount: "",
-      description: "",
-      poNumber: "",
-      warranty: "",
-      expiredWarranty: "",
-      licenseType: "",
-      expiredSubscription: "",
-    });
-  };
-
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      resetForm();
-      setError(null);
-    }
-  };
-
-  const formatDate = (isoDate: string) => {
-    return new Date(isoDate).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Cost Tracking</h2>
-          <p className="text-muted-foreground">Monitor expenses and manage vendors</p>
+          <h2 className="text-3xl font-bold tracking-tight">Vendor Tracking</h2>
+          <p className="text-muted-foreground">Kelola dan pantau vendor</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Expense
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{isEditMode ? "Edit Expense" : "Record New Expense"}</DialogTitle>
-              <DialogDescription>
-                {isEditMode ? "Update the expense information" : "Add a new expense entry to track against your budget"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount ($)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="e.g., 5000"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="vendor">Vendor</Label>
-                  <Input
-                    id="vendor"
-                    placeholder="e.g., AWS, Microsoft"
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Hardware">Hardware</SelectItem>
-                      <SelectItem value="Software">Software</SelectItem>
-                      <SelectItem value="Website">Website</SelectItem>
-                      <SelectItem value="Personnel">Personnel</SelectItem>
-                      <SelectItem value="Services">Services</SelectItem>
-                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="poNumber">PO Number</Label>
-                <Input
-                  id="poNumber"
-                  placeholder="e.g., PO-2024-001"
-                  value={formData.poNumber}
-                  onChange={(e) => setFormData({ ...formData, poNumber: e.target.value })}
-                  required
-                />
-              </div>
-
-              {formData.category === "Hardware" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="warranty">Warranty</Label>
-                      <Select value={formData.warranty} onValueChange={(value) => setFormData({ ...formData, warranty: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select warranty status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Ada">Ada</SelectItem>
-                          <SelectItem value="Tidak Ada">Tidak Ada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expiredWarranty">Expired Warranty</Label>
-                      <Input
-                        id="expiredWarranty"
-                        type="date"
-                        value={formData.expiredWarranty}
-                        onChange={(e) => setFormData({ ...formData, expiredWarranty: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {(formData.category === "Software" || formData.category === "Website") && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="licenseType">License Type</Label>
-                      <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select license type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Subscription">Subscription</SelectItem>
-                          <SelectItem value="Perpetual">Perpetual</SelectItem>
-                          <SelectItem value="OEM">OEM</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="expiredSubscription">Expired Subscription</Label>
-                      <Input
-                        id="expiredSubscription"
-                        type="date"
-                        value={formData.expiredSubscription}
-                        onChange={(e) => setFormData({ ...formData, expiredSubscription: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  placeholder="Brief description of the expense..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : (isEditMode ? "Update Expense" : "Add Expense")}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {error && (
@@ -414,178 +68,85 @@ export default function CostTracking() {
         </div>
       )}
 
-      <Tabs defaultValue="expenses" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="vendors">Vendors</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="expenses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Recent Expenses</CardTitle>
-                  <CardDescription>Track all IT-related expenses</CardDescription>
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Search className="h-4 w-4 mr-1" />
-                    Search
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" />
-                    Filter
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-muted-foreground">Loading expenses...</div>
-                </div>
-              ) : expenses.length === 0 ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-muted-foreground">No expenses found</div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Vendor</TableHead>
-                        <TableHead>PO Number</TableHead>
-                        <TableHead>Warranty</TableHead>
-                        <TableHead>Expired Warranty</TableHead>
-                        <TableHead>License Type</TableHead>
-                        <TableHead>Expired Subscription</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-center">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {expenses.map((expense) => (
-                        <TableRow key={expense.id}>
-                          <TableCell>{formatDate(expense.date)}</TableCell>
-                          <TableCell>{expense.category}</TableCell>
-                          <TableCell>{expense.description}</TableCell>
-                          <TableCell className="font-medium">{expense.vendor}</TableCell>
-                          <TableCell className="font-medium">{expense.poNumber}</TableCell>
-                          <TableCell>{expense.warranty || "-"}</TableCell>
-                          <TableCell>{expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}</TableCell>
-                          <TableCell>{expense.licenseType || "-"}</TableCell>
-                          <TableCell>{expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            ${expense.amount.toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <Select 
-                              value={expense.status} 
-                              onValueChange={(value) => handleStatusChange(expense.id, value)}
-                            >
-                              <SelectTrigger className="w-[130px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="approved">
-                                  <span className="flex items-center">
-                                    <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                                    Approved
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="pending">
-                                  <span className="flex items-center">
-                                    <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
-                                    Pending
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="rejected">
-                                  <span className="flex items-center">
-                                    <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-                                    Rejected
-                                  </span>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(expense)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(expense.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="vendors" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Vendor Management</CardTitle>
-              <CardDescription>Overview of IT vendors and their contracts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {vendors.length === 0 ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-muted-foreground">No vendors found</div>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Vendor Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Total Spent</TableHead>
-                      <TableHead className="text-center">Active Contracts</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {vendors.map((vendor) => (
-                      <TableRow key={vendor.id}>
-                        <TableCell className="font-medium">{vendor.name}</TableCell>
-                        <TableCell>{vendor.category}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          ${vendor.totalSpent.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-center">{vendor.contracts}</TableCell>
-                        <TableCell>
-                          <Badge className={vendor.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}>
-                            {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Daftar Vendor</CardTitle>
+              <CardDescription>Ringkasan vendor dan kontrak mereka</CardDescription>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm">
+                <Search className="h-4 w-4 mr-1" />
+                Cari
+              </Button>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-1" />
+                Filter
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Memuat vendor...</div>
+            </div>
+          ) : vendors.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Tidak ada vendor ditemukan</div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Vendor</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead className="text-right">Total Pengeluaran</TableHead>
+                  <TableHead className="text-center">Kontrak Aktif</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendors.map((vendor) => (
+                  <TableRow key={vendor.id}>
+                    <TableCell className="font-medium">{vendor.name}</TableCell>
+                    <TableCell>{vendor.category}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      Rp {vendor.totalSpent.toLocaleString('id-ID')}
+                    </TableCell>
+                    <TableCell className="text-center">{vendor.contracts}</TableCell>
+                    <TableCell>
+                      <Select 
+                        value={vendor.status} 
+                        onValueChange={(value) => handleStatusChange(vendor.id, value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">
+                            <span className="flex items-center">
+                              <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                              Aktif
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="inactive">
+                            <span className="flex items-center">
+                              <span className="w-2 h-2 rounded-full bg-gray-500 mr-2"></span>
+                              Tidak Aktif
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
