@@ -48,6 +48,34 @@ export default function Dashboard() {
     fetchExpenses();
   }, []);
 
+  // Clear irrelevant fields when category changes
+  useEffect(() => {
+    if (formData.category === "Hardware") {
+      // Clear license fields when switching to Hardware
+      setFormData(prev => ({
+        ...prev,
+        licenseType: "",
+        expiredSubscription: ""
+      }));
+    } else if (formData.category === "Software" || formData.category === "Website") {
+      // Clear warranty fields when switching to Software/Website
+      setFormData(prev => ({
+        ...prev,
+        warranty: "",
+        expiredWarranty: ""
+      }));
+    } else {
+      // Clear all optional fields for other categories
+      setFormData(prev => ({
+        ...prev,
+        warranty: "",
+        expiredWarranty: "",
+        licenseType: "",
+        expiredSubscription: ""
+      }));
+    }
+  }, [formData.category]);
+
   const fetchExpenses = async () => {
     try {
       setIsLoading(true);
