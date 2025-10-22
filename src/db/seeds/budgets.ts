@@ -2,129 +2,348 @@ import { db } from '@/db';
 import { budgets } from '@/db/schema';
 
 async function main() {
-    const categories = ['Hardware', 'Software', 'Personnel', 'Services', 'Infrastructure', 'Website'];
-    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    
-    const statusDistribution = [
-        { status: 'approved', weight: 60 },
-        { status: 'pending', weight: 25 },
-        { status: 'draft', weight: 15 }
+    const sampleBudgets = [
+        // Hardware - Q1
+        {
+            name: 'Q1 2026 Pengadaan Hardware Server dan Storage',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Hardware',
+            amount: 475000000,
+            status: 'approved',
+            createdBy: 'Budi Santoso',
+            approver: 'Ir. Bambang Suryanto, M.Kom',
+            description: 'Pembelian server rack dan storage NAS untuk upgrade data center',
+            createdAt: new Date('2025-12-05').toISOString(),
+            updatedAt: new Date('2025-12-08').toISOString(),
+        },
+        // Hardware - Q2
+        {
+            name: 'Q2 2026 Procurement Laptop dan Desktop Karyawan',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Hardware',
+            amount: 395000000,
+            status: 'approved',
+            createdBy: 'Siti Nurhaliza',
+            approver: 'Dr. Siti Rahmawati, S.T., M.T',
+            description: 'Pengadaan laptop dan desktop untuk ekspansi tim',
+            createdAt: new Date('2025-12-10').toISOString(),
+            updatedAt: new Date('2025-12-12').toISOString(),
+        },
+        // Hardware - Q3
+        {
+            name: 'Q3 2026 Upgrade Networking Equipment',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Hardware',
+            amount: 285000000,
+            status: 'pending',
+            createdBy: 'Ahmad Hidayat',
+            approver: 'Drs. Ahmad Dahlan, M.M',
+            description: 'Upgrade switch dan access point WiFi 6E',
+            createdAt: new Date('2025-12-15').toISOString(),
+            updatedAt: new Date('2025-12-15').toISOString(),
+        },
+        // Hardware - Q4
+        {
+            name: 'Q4 2026 Pembelian UPS dan Cooling System',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Hardware',
+            amount: 195000000,
+            status: 'draft',
+            createdBy: 'Rina Kusuma',
+            approver: null,
+            description: 'Pengadaan UPS dan sistem pendingin ruang server',
+            createdAt: new Date('2025-12-20').toISOString(),
+            updatedAt: new Date('2025-12-20').toISOString(),
+        },
+        // Software - Q1
+        {
+            name: 'Q1 2026 Lisensi Microsoft 365 Enterprise',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Software',
+            amount: 235000000,
+            status: 'approved',
+            createdBy: 'Dedi Prasetyo',
+            approver: 'Prof. Dr. Rina Indiastuti',
+            description: 'Perpanjangan lisensi Microsoft 365 untuk semua karyawan',
+            createdAt: new Date('2025-12-08').toISOString(),
+            updatedAt: new Date('2025-12-10').toISOString(),
+        },
+        // Software - Q2
+        {
+            name: 'Q2 2026 Software Development Tools dan IDE',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Software',
+            amount: 105000000,
+            status: 'approved',
+            createdBy: 'Lina Marlina',
+            approver: 'Ir. Bambang Suryanto, M.Kom',
+            description: 'Lisensi development tools dan IDE untuk tim developer',
+            createdAt: new Date('2025-12-12').toISOString(),
+            updatedAt: new Date('2025-12-14').toISOString(),
+        },
+        // Software - Q3
+        {
+            name: 'Q3 2026 Database dan Middleware Licenses',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Software',
+            amount: 435000000,
+            status: 'pending',
+            createdBy: 'Agus Setiawan',
+            approver: 'Dr. Siti Rahmawati, S.T., M.T',
+            description: 'Lisensi database dan middleware enterprise',
+            createdAt: new Date('2025-12-18').toISOString(),
+            updatedAt: new Date('2025-12-18').toISOString(),
+        },
+        // Software - Q4
+        {
+            name: 'Q4 2026 Security Software dan Antivirus',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Software',
+            amount: 175000000,
+            status: 'approved',
+            createdBy: 'Dewi Sartika',
+            approver: 'Drs. Ahmad Dahlan, M.M',
+            description: 'Lisensi security software dan endpoint protection',
+            createdAt: new Date('2025-12-22').toISOString(),
+            updatedAt: new Date('2025-12-25').toISOString(),
+        },
+        // Personnel - Q1
+        {
+            name: 'Q1 2026 Pelatihan Sertifikasi IT Staff',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Personnel',
+            amount: 135000000,
+            status: 'approved',
+            createdBy: 'Hendra Gunawan',
+            approver: 'Prof. Dr. Rina Indiastuti',
+            description: 'Pelatihan cloud certification dan technical skills',
+            createdAt: new Date('2025-12-07').toISOString(),
+            updatedAt: new Date('2025-12-09').toISOString(),
+        },
+        // Personnel - Q2
+        {
+            name: 'Q2 2026 Training Cybersecurity dan DevOps',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Personnel',
+            amount: 95000000,
+            status: 'pending',
+            createdBy: 'Ratna Sari',
+            approver: 'Ir. Bambang Suryanto, M.Kom',
+            description: 'Workshop cybersecurity dan DevOps practices',
+            createdAt: new Date('2025-12-14').toISOString(),
+            updatedAt: new Date('2025-12-14').toISOString(),
+        },
+        // Personnel - Q3
+        {
+            name: 'Q3 2026 Rekrutmen IT Specialist',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Personnel',
+            amount: 85000000,
+            status: 'draft',
+            createdBy: 'Bambang Wijaya',
+            approver: null,
+            description: 'Biaya rekrutmen software engineer dan network admin',
+            createdAt: new Date('2026-01-05').toISOString(),
+            updatedAt: new Date('2026-01-05').toISOString(),
+        },
+        // Personnel - Q4
+        {
+            name: 'Q4 2026 Program Pengembangan Kompetensi',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Personnel',
+            amount: 105000000,
+            status: 'approved',
+            createdBy: 'Maya Anggraini',
+            approver: 'Dr. Siti Rahmawati, S.T., M.T',
+            description: 'In-house training dan workshop teknikal',
+            createdAt: new Date('2026-01-10').toISOString(),
+            updatedAt: new Date('2026-01-12').toISOString(),
+        },
+        // Services - Q1
+        {
+            name: 'Q1 2026 Kontrak Maintenance Hardware',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Services',
+            amount: 195000000,
+            status: 'approved',
+            createdBy: 'Budi Santoso',
+            approver: 'Drs. Ahmad Dahlan, M.M',
+            description: 'Kontrak maintenance tahunan infrastructure',
+            createdAt: new Date('2025-12-06').toISOString(),
+            updatedAt: new Date('2025-12-08').toISOString(),
+        },
+        // Services - Q2
+        {
+            name: 'Q2 2026 IT Consulting dan System Integration',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Services',
+            amount: 335000000,
+            status: 'approved',
+            createdBy: 'Siti Nurhaliza',
+            approver: 'Prof. Dr. Rina Indiastuti',
+            description: 'Jasa konsultan untuk implementasi sistem baru',
+            createdAt: new Date('2025-12-11').toISOString(),
+            updatedAt: new Date('2025-12-13').toISOString(),
+        },
+        // Services - Q3
+        {
+            name: 'Q3 2026 Managed Services dan NOC',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Services',
+            amount: 255000000,
+            status: 'pending',
+            createdBy: 'Ahmad Hidayat',
+            approver: 'Ir. Bambang Suryanto, M.Kom',
+            description: 'Layanan managed services 24/7',
+            createdAt: new Date('2025-12-16').toISOString(),
+            updatedAt: new Date('2025-12-16').toISOString(),
+        },
+        // Services - Q4
+        {
+            name: 'Q4 2026 Support dan Help Desk Outsourcing',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Services',
+            amount: 155000000,
+            status: 'draft',
+            createdBy: 'Rina Kusuma',
+            approver: null,
+            description: 'Outsourcing technical support',
+            createdAt: new Date('2025-12-28').toISOString(),
+            updatedAt: new Date('2025-12-28').toISOString(),
+        },
+        // Infrastructure - Q1
+        {
+            name: 'Q1 2026 Cloud Services AWS dan Azure',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Infrastructure',
+            amount: 395000000,
+            status: 'approved',
+            createdBy: 'Dedi Prasetyo',
+            approver: 'Dr. Siti Rahmawati, S.T., M.T',
+            description: 'Biaya operasional cloud computing',
+            createdAt: new Date('2025-12-09').toISOString(),
+            updatedAt: new Date('2025-12-11').toISOString(),
+        },
+        // Infrastructure - Q2
+        {
+            name: 'Q2 2026 Data Center Colocation',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Infrastructure',
+            amount: 305000000,
+            status: 'approved',
+            createdBy: 'Lina Marlina',
+            approver: 'Drs. Ahmad Dahlan, M.M',
+            description: 'Biaya colocation di data center tier 3',
+            createdAt: new Date('2025-12-13').toISOString(),
+            updatedAt: new Date('2025-12-15').toISOString(),
+        },
+        // Infrastructure - Q3
+        {
+            name: 'Q3 2026 Network Bandwidth dan Internet',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Infrastructure',
+            amount: 185000000,
+            status: 'pending',
+            createdBy: 'Agus Setiawan',
+            approver: 'Prof. Dr. Rina Indiastuti',
+            description: 'Biaya internet dedicated dan backup connection',
+            createdAt: new Date('2026-01-02').toISOString(),
+            updatedAt: new Date('2026-01-02').toISOString(),
+        },
+        // Infrastructure - Q4
+        {
+            name: 'Q4 2026 Backup dan Disaster Recovery',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Infrastructure',
+            amount: 235000000,
+            status: 'approved',
+            createdBy: 'Dewi Sartika',
+            approver: 'Ir. Bambang Suryanto, M.Kom',
+            description: 'Implementasi backup dan disaster recovery',
+            createdAt: new Date('2026-01-08').toISOString(),
+            updatedAt: new Date('2026-01-10').toISOString(),
+        },
+        // Website - Q1
+        {
+            name: 'Q1 2026 Web Hosting dan CDN Services',
+            year: 2026,
+            quarter: 'Q1',
+            category: 'Website',
+            amount: 75000000,
+            status: 'approved',
+            createdBy: 'Hendra Gunawan',
+            approver: 'Dr. Siti Rahmawati, S.T., M.T',
+            description: 'Biaya hosting dan CDN untuk website perusahaan',
+            createdAt: new Date('2025-12-04').toISOString(),
+            updatedAt: new Date('2025-12-06').toISOString(),
+        },
+        // Website - Q2
+        {
+            name: 'Q2 2026 Domain dan SSL Certificates',
+            year: 2026,
+            quarter: 'Q2',
+            category: 'Website',
+            amount: 35000000,
+            status: 'pending',
+            createdBy: 'Ratna Sari',
+            approver: 'Drs. Ahmad Dahlan, M.M',
+            description: 'Perpanjangan domain dan SSL certificates',
+            createdAt: new Date('2025-12-17').toISOString(),
+            updatedAt: new Date('2025-12-17').toISOString(),
+        },
+        // Website - Q3
+        {
+            name: 'Q3 2026 Website Development dan Maintenance',
+            year: 2026,
+            quarter: 'Q3',
+            category: 'Website',
+            amount: 165000000,
+            status: 'draft',
+            createdBy: 'Bambang Wijaya',
+            approver: null,
+            description: 'Pengembangan fitur baru dan maintenance',
+            createdAt: new Date('2026-01-15').toISOString(),
+            updatedAt: new Date('2026-01-15').toISOString(),
+        },
+        // Website - Q4
+        {
+            name: 'Q4 2026 CMS dan Web Application Licenses',
+            year: 2026,
+            quarter: 'Q4',
+            category: 'Website',
+            amount: 95000000,
+            status: 'approved',
+            createdBy: 'Maya Anggraini',
+            approver: 'Prof. Dr. Rina Indiastuti',
+            description: 'Lisensi CMS dan web application framework',
+            createdAt: new Date('2026-01-20').toISOString(),
+            updatedAt: new Date('2026-01-22').toISOString(),
+        },
     ];
-    
-    const indonesianNames = [
-        'Budi Santoso',
-        'Siti Nurhaliza',
-        'Ahmad Hidayat',
-        'Rina Kusuma',
-        'Dedi Prasetyo',
-        'Lina Marlina',
-        'Agus Setiawan',
-        'Dewi Sartika',
-        'Hendra Gunawan',
-        'Ratna Sari',
-        'Bambang Wijaya',
-        'Maya Anggraini'
-    ];
-    
-    const approverNames = [
-        'Ir. Bambang Suryanto, M.Kom',
-        'Dr. Siti Rahmawati, S.T., M.T',
-        'Drs. Ahmad Dahlan, M.M',
-        'Prof. Dr. Rina Indiastuti'
-    ];
-    
-    const budgetDetails = {
-        Hardware: [
-            { name: 'Pengadaan Hardware Server dan Storage', desc: 'Pembelian server rack 2U dan storage NAS untuk data center', amount: 450000000 },
-            { name: 'Procurement Laptop dan Desktop Karyawan', desc: 'Pengadaan 30 unit laptop dan 20 unit desktop untuk staff IT', amount: 380000000 },
-            { name: 'Upgrade Networking Equipment', desc: 'Upgrade switch core dan access point WiFi 6 untuk seluruh gedung', amount: 275000000 },
-            { name: 'Pembelian UPS dan Cooling System', desc: 'Pengadaan UPS 10KVA dan sistem pendingin ruang server', amount: 185000000 }
-        ],
-        Software: [
-            { name: 'Lisensi Microsoft 365 Enterprise', desc: 'Perpanjangan lisensi Microsoft 365 E3 untuk 150 users', amount: 225000000 },
-            { name: 'Software Development Tools dan IDE', desc: 'Lisensi JetBrains, Visual Studio Professional, dan tools development', amount: 95000000 },
-            { name: 'Database dan Middleware Licenses', desc: 'Lisensi Oracle Database, MongoDB Enterprise, dan Redis Enterprise', amount: 420000000 },
-            { name: 'Security Software dan Antivirus', desc: 'Lisensi Kaspersky Endpoint Security dan firewall software', amount: 165000000 }
-        ],
-        Personnel: [
-            { name: 'Pelatihan Sertifikasi IT Staff', desc: 'Pelatihan AWS Certified Solutions Architect dan Azure Administrator', amount: 125000000 },
-            { name: 'Training Cybersecurity dan DevOps', desc: 'Workshop cybersecurity awareness dan DevOps practices', amount: 85000000 },
-            { name: 'Rekrutmen IT Specialist', desc: 'Biaya rekrutmen 5 software engineer dan 2 network administrator', amount: 75000000 },
-            { name: 'Program Pengembangan Kompetensi', desc: 'In-house training dan workshop teknikal untuk tim IT', amount: 95000000 }
-        ],
-        Services: [
-            { name: 'Kontrak Maintenance Hardware', desc: 'Kontrak maintenance tahunan untuk server, storage, dan networking', amount: 185000000 },
-            { name: 'IT Consulting dan System Integration', desc: 'Jasa konsultan untuk implementasi ERP dan system integration', amount: 325000000 },
-            { name: 'Managed Services dan NOC', desc: 'Layanan managed services 24/7 dan Network Operations Center', amount: 245000000 },
-            { name: 'Support dan Help Desk Outsourcing', desc: 'Outsourcing help desk support level 1 dan technical support', amount: 145000000 }
-        ],
-        Infrastructure: [
-            { name: 'Cloud Services AWS dan Azure', desc: 'Biaya operasional cloud computing, storage, dan database services', amount: 385000000 },
-            { name: 'Data Center Colocation', desc: 'Biaya sewa rack space, power, dan cooling di data center tier 3', amount: 295000000 },
-            { name: 'Network Bandwidth dan Internet', desc: 'Biaya internet dedicated 1Gbps dan backup connection', amount: 175000000 },
-            { name: 'Backup dan Disaster Recovery', desc: 'Implementasi backup solution dan disaster recovery site', amount: 225000000 }
-        ],
-        Website: [
-            { name: 'Web Hosting dan CDN Services', desc: 'Biaya hosting production dan CDN untuk website perusahaan', amount: 65000000 },
-            { name: 'Domain dan SSL Certificates', desc: 'Perpanjangan domain dan SSL certificates untuk semua website', amount: 25000000 },
-            { name: 'Website Development dan Maintenance', desc: 'Pengembangan fitur baru dan maintenance website corporate', amount: 155000000 },
-            { name: 'CMS dan Web Application Licenses', desc: 'Lisensi WordPress premium plugins dan web application framework', amount: 85000000 }
-        ]
-    };
-    
-    const getRandomStatus = () => {
-        const rand = Math.random() * 100;
-        let cumulative = 0;
-        
-        for (const { status, weight } of statusDistribution) {
-            cumulative += weight;
-            if (rand <= cumulative) return status;
-        }
-        return 'draft';
-    };
-    
-    const getRandomName = () => indonesianNames[Math.floor(Math.random() * indonesianNames.length)];
-    const getRandomApprover = () => approverNames[Math.floor(Math.random() * approverNames.length)];
-    
-    const getRandomDate = (start: Date, end: Date) => {
-        const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-        return date.toISOString();
-    };
-    
-    const startDate = new Date('2024-12-01');
-    const endDate = new Date('2025-01-31');
-    
-    const sampleBudgets = [];
-    
-    categories.forEach((category) => {
-        const categoryBudgets = budgetDetails[category as keyof typeof budgetDetails];
-        
-        quarters.forEach((quarter, qIndex) => {
-            const budgetItem = categoryBudgets[qIndex];
-            const status = getRandomStatus();
-            const createdAt = getRandomDate(startDate, endDate);
-            const createdDate = new Date(createdAt);
-            const updatedAt = new Date(createdDate.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
-            
-            sampleBudgets.push({
-                name: `${quarter} 2025 ${budgetItem.name}`,
-                year: 2025,
-                quarter: quarter,
-                category: category,
-                amount: budgetItem.amount,
-                status: status,
-                createdBy: getRandomName(),
-                approver: status === 'draft' ? null : getRandomApprover(),
-                description: budgetItem.desc,
-                createdAt: createdAt,
-                updatedAt: updatedAt
-            });
-        });
-    });
 
     await db.insert(budgets).values(sampleBudgets);
     
-    console.log('✅ Budgets seeder completed successfully - 24 budget entries created');
+    console.log('✅ Budgets seeder completed successfully - 24 entries created for 2026');
 }
 
 main().catch((error) => {
