@@ -238,9 +238,9 @@ export default function BudgetPlanning() {
                     <SelectContent>
                       <SelectItem value="Hardware">Hardware</SelectItem>
                       <SelectItem value="Software">Software</SelectItem>
-                      <SelectItem value="Personnel">Personnel</SelectItem>
                       <SelectItem value="Services">Services</SelectItem>
                       <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                      <SelectItem value="Website">Website</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
