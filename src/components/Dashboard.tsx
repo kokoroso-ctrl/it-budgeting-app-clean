@@ -59,6 +59,21 @@ export default function Dashboard() {
     }
   };
 
+  // Helper functions - MUST be defined before use
+  const formatDate = (isoDate: string) => {
+    return new Date(isoDate).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatMonthLabel = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  };
+
   // Filter expenses based on period, category, and search
   const filteredExpenses = expenses.filter((expense) => {
     // Period filter
@@ -291,20 +306,6 @@ export default function Dashboard() {
       if (yearDiff !== 0) return yearDiff;
       return months.indexOf(monthA) - months.indexOf(monthB);
     });
-
-  const formatDate = (isoDate: string) => {
-    return new Date(isoDate).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const formatMonthLabel = (monthKey: string) => {
-    const [year, month] = monthKey.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-  };
 
   if (isLoading) {
     return (
