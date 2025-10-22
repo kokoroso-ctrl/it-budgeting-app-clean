@@ -9,28 +9,75 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const forecastData = [
-  { month: "Jan", actual: 1725000000, forecast: 1800000000 },
-  { month: "Feb", actual: 1875000000, forecast: 1800000000 },
-  { month: "Mar", actual: 1770000000, forecast: 1800000000 },
-  { month: "Apr", actual: 1830000000, forecast: 1800000000 },
-  { month: "May", actual: 1785000000, forecast: 1800000000 },
-  { month: "Jun", actual: 1845000000, forecast: 1800000000 },
-  { month: "Jul", actual: null, forecast: 1815000000 },
-  { month: "Aug", actual: null, forecast: 1830000000 },
-  { month: "Sep", actual: null, forecast: 1785000000 },
-  { month: "Oct", actual: null, forecast: 1800000000 },
-  { month: "Nov", actual: null, forecast: 1845000000 },
-  { month: "Dec", actual: null, forecast: 1875000000 },
-];
+// Data untuk multiple tahun
+const allForecastData = {
+  2024: [
+    { month: "Jan", actual: 1725000000, forecast: 1800000000 },
+    { month: "Feb", actual: 1875000000, forecast: 1800000000 },
+    { month: "Mar", actual: 1770000000, forecast: 1800000000 },
+    { month: "Apr", actual: 1830000000, forecast: 1800000000 },
+    { month: "May", actual: 1785000000, forecast: 1800000000 },
+    { month: "Jun", actual: 1845000000, forecast: 1800000000 },
+    { month: "Jul", actual: null, forecast: 1815000000 },
+    { month: "Aug", actual: null, forecast: 1830000000 },
+    { month: "Sep", actual: null, forecast: 1785000000 },
+    { month: "Oct", actual: null, forecast: 1800000000 },
+    { month: "Nov", actual: null, forecast: 1845000000 },
+    { month: "Dec", actual: null, forecast: 1875000000 },
+  ],
+  2025: [
+    { month: "Jan", actual: 1950000000, forecast: 1980000000 },
+    { month: "Feb", actual: 2025000000, forecast: 1980000000 },
+    { month: "Mar", actual: 1890000000, forecast: 1980000000 },
+    { month: "Apr", actual: null, forecast: 1980000000 },
+    { month: "May", actual: null, forecast: 1980000000 },
+    { month: "Jun", actual: null, forecast: 1980000000 },
+    { month: "Jul", actual: null, forecast: 1995000000 },
+    { month: "Aug", actual: null, forecast: 2010000000 },
+    { month: "Sep", actual: null, forecast: 1965000000 },
+    { month: "Oct", actual: null, forecast: 1980000000 },
+    { month: "Nov", actual: null, forecast: 2025000000 },
+    { month: "Dec", actual: null, forecast: 2055000000 },
+  ],
+  2026: [
+    { month: "Jan", actual: null, forecast: 2145000000 },
+    { month: "Feb", actual: null, forecast: 2145000000 },
+    { month: "Mar", actual: null, forecast: 2145000000 },
+    { month: "Apr", actual: null, forecast: 2145000000 },
+    { month: "May", actual: null, forecast: 2145000000 },
+    { month: "Jun", actual: null, forecast: 2145000000 },
+    { month: "Jul", actual: null, forecast: 2160000000 },
+    { month: "Aug", actual: null, forecast: 2175000000 },
+    { month: "Sep", actual: null, forecast: 2130000000 },
+    { month: "Oct", actual: null, forecast: 2145000000 },
+    { month: "Nov", actual: null, forecast: 2190000000 },
+    { month: "Dec", actual: null, forecast: 2220000000 },
+  ],
+};
 
-const varianceData = [
-  { category: "Hardware", budget: 4800000000, actual: 4275000000, variance: 525000000, variancePercent: 10.9 },
-  { category: "Software", budget: 4200000000, actual: 3975000000, variance: 225000000, variancePercent: 5.4 },
-  { category: "Personnel", budget: 7800000000, actual: 7500000000, variance: 300000000, variancePercent: 3.8 },
-  { category: "Services", budget: 2700000000, actual: 2925000000, variance: -225000000, variancePercent: -8.3 },
-  { category: "Infrastructure", budget: 6750000000, actual: 6300000000, variance: 450000000, variancePercent: 6.7 },
-];
+const allVarianceData = {
+  2024: [
+    { category: "Hardware", budget: 4800000000, actual: 4275000000, variance: 525000000, variancePercent: 10.9 },
+    { category: "Software", budget: 4200000000, actual: 3975000000, variance: 225000000, variancePercent: 5.4 },
+    { category: "Personnel", budget: 7800000000, actual: 7500000000, variance: 300000000, variancePercent: 3.8 },
+    { category: "Services", budget: 2700000000, actual: 2925000000, variance: -225000000, variancePercent: -8.3 },
+    { category: "Infrastructure", budget: 6750000000, actual: 6300000000, variance: 450000000, variancePercent: 6.7 },
+  ],
+  2025: [
+    { category: "Hardware", budget: 5280000000, actual: 4650000000, variance: 630000000, variancePercent: 11.9 },
+    { category: "Software", budget: 4620000000, actual: 4320000000, variance: 300000000, variancePercent: 6.5 },
+    { category: "Personnel", budget: 8580000000, actual: 8250000000, variance: 330000000, variancePercent: 3.8 },
+    { category: "Services", budget: 2970000000, actual: 3180000000, variance: -210000000, variancePercent: -7.1 },
+    { category: "Infrastructure", budget: 7425000000, actual: 6930000000, variance: 495000000, variancePercent: 6.7 },
+  ],
+  2026: [
+    { category: "Hardware", budget: 5808000000, actual: 0, variance: 5808000000, variancePercent: 100 },
+    { category: "Software", budget: 5082000000, actual: 0, variance: 5082000000, variancePercent: 100 },
+    { category: "Personnel", budget: 9438000000, actual: 0, variance: 9438000000, variancePercent: 100 },
+    { category: "Services", budget: 3267000000, actual: 0, variance: 3267000000, variancePercent: 100 },
+    { category: "Infrastructure", budget: 8168000000, actual: 0, variance: 8168000000, variancePercent: 100 },
+  ],
+};
 
 const alerts = [
   {
@@ -79,6 +126,8 @@ export default function Reporting() {
   const [filterType, setFilterType] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [forecastYear, setForecastYear] = useState("2024");
+  const [varianceYear, setVarianceYear] = useState("2024");
   const [loading, setLoading] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -384,15 +433,29 @@ export default function Reporting() {
           ))}
         </div>
 
-        {/* Forecast Chart */}
+        {/* Forecast Chart with Year Filter */}
         <Card>
           <CardHeader>
-            <CardTitle>Ramalan Anggaran</CardTitle>
-            <CardDescription>Pengeluaran aktual vs ramalan untuk tahun 2024</CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Ramalan Anggaran</CardTitle>
+                <CardDescription>Pengeluaran aktual vs ramalan</CardDescription>
+              </div>
+              <Select value={forecastYear} onValueChange={setForecastYear}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={forecastData}>
+              <LineChart data={allForecastData[forecastYear as keyof typeof allForecastData]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`} />
@@ -421,11 +484,25 @@ export default function Reporting() {
           </CardContent>
         </Card>
 
-        {/* Variance Report Table */}
+        {/* Variance Report Table with Year Filter */}
         <Card>
           <CardHeader>
-            <CardTitle>Laporan Varians Anggaran</CardTitle>
-            <CardDescription>Rincian detail per kategori</CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Laporan Varians Anggaran</CardTitle>
+                <CardDescription>Rincian detail per kategori</CardDescription>
+              </div>
+              <Select value={varianceYear} onValueChange={setVarianceYear}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -440,7 +517,7 @@ export default function Reporting() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {varianceData.map((item) => (
+                {allVarianceData[varianceYear as keyof typeof allVarianceData].map((item) => (
                   <TableRow key={item.category}>
                     <TableCell className="font-medium">{item.category}</TableCell>
                     <TableCell className="text-right">Rp {(item.budget / 1000000).toFixed(0)}Jt</TableCell>
@@ -465,16 +542,30 @@ export default function Reporting() {
           </CardContent>
         </Card>
 
-        {/* Beautiful Variance Chart */}
+        {/* Beautiful Variance Chart with Year Filter */}
         <Card>
           <CardHeader>
-            <CardTitle>Visualisasi Varians</CardTitle>
-            <CardDescription>Anggaran vs pengeluaran aktual per kategori</CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Visualisasi Varians</CardTitle>
+                <CardDescription>Anggaran vs pengeluaran aktual per kategori</CardDescription>
+              </div>
+              <Select value={varianceYear} onValueChange={setVarianceYear}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart 
-                data={varianceData}
+                data={allVarianceData[varianceYear as keyof typeof allVarianceData]}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 barGap={8}
               >
