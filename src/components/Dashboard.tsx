@@ -179,7 +179,7 @@ export default function Dashboard() {
             category: row['Kategori'],
             description: row['Deskripsi'],
             vendor: row['Vendor'],
-            poNumber: cleanValue(row['No PO']) || '',
+            poNumber: cleanValue(row['No PO']) || '-',
             amount: parseFloat(String(row['Harga'] || 0)),
             status: row['Status'] || 'pending',
           };
