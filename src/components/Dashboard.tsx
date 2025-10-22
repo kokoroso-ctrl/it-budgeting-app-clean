@@ -181,21 +181,35 @@ export default function Dashboard() {
         const row: any = jsonData[i];
         
         try {
+          // Skip empty rows - check if essential fields are missing
+          if (!row['Tanggal'] || !row['Kategori'] || !row['Deskripsi'] || !row['Vendor']) {
+            console.log(`Baris ${i + 2}: Baris kosong, dilewati`);
+            continue;
+          }
+
           // Helper function to clean empty values
           const cleanValue = (value: any): string | null => {
             if (!value || value === '-' || value === '' || value === 'null') return null;
-            return value;
+            return String(value).trim();
           };
+
+          // Parse dates
+          const parsedDate = parseExcelDate(row['Tanggal']);
+          if (!parsedDate) {
+            errors.push(`Baris ${i + 2}: Tanggal tidak valid (${row['Tanggal']})`);
+            errorCount++;
+            continue;
+          }
 
           // Map Excel columns to API fields
           const expenseData: any = {
-            date: parseExcelDate(row['Tanggal']),
-            category: row['Kategori'],
-            description: row['Deskripsi'],
-            vendor: row['Vendor'],
+            date: parsedDate,
+            category: String(row['Kategori']).trim(),
+            description: String(row['Deskripsi']).trim(),
+            vendor: String(row['Vendor']).trim(),
             poNumber: cleanValue(row['No PO']) || '-',
             amount: parseFloat(String(row['Harga'] || 0)),
-            status: row['Status'] || 'pending',
+            status: cleanValue(row['Status']) || 'pending',
           };
 
           // Only include warranty fields for Hardware category
@@ -207,7 +221,10 @@ export default function Dashboard() {
               expenseData.warranty = warrantyValue;
             }
             if (expiredWarrantyValue) {
-              expenseData.expiredWarranty = parseExcelDate(expiredWarrantyValue);
+              const parsedWarrantyDate = parseExcelDate(expiredWarrantyValue);
+              if (parsedWarrantyDate) {
+                expenseData.expiredWarranty = parsedWarrantyDate;
+              }
             }
           }
 
@@ -220,7 +237,10 @@ export default function Dashboard() {
               expenseData.licenseType = licenseTypeValue;
             }
             if (expiredLicenseValue) {
-              expenseData.expiredSubscription = parseExcelDate(expiredLicenseValue);
+              const parsedLicenseDate = parseExcelDate(expiredLicenseValue);
+              if (parsedLicenseDate) {
+                expenseData.expiredSubscription = parsedLicenseDate;
+              }
             }
           }
 
@@ -232,6 +252,8 @@ export default function Dashboard() {
             continue;
           }
 
+          console.log(`Baris ${i + 2}: Mengirim data`, expenseData);
+
           // Send to API
           const response = await fetch('/api/expenses', {
             method: 'POST',
@@ -240,19 +262,25 @@ export default function Dashboard() {
           });
 
           if (response.ok) {
+            const result = await response.json();
+            console.log(`Baris ${i + 2}: Berhasil disimpan`, result);
             successCount++;
           } else {
             const error = await response.json();
+            console.error(`Baris ${i + 2}: Error response`, error);
             errors.push(`Baris ${i + 2}: ${error.error || 'Gagal menyimpan'}`);
             errorCount++;
           }
         } catch (err: any) {
+          console.error(`Baris ${i + 2}: Exception`, err);
           errors.push(`Baris ${i + 2}: ${err.message}`);
           errorCount++;
         }
       }
 
-      // Show results
+      console.log(`Import selesai: ${successCount} berhasil, ${errorCount} gagal`);
+
+      // Refresh data from server
       await fetchExpenses();
       
       if (successCount > 0 && errorCount === 0) {
@@ -261,7 +289,7 @@ export default function Dashboard() {
         toast.warning(`${successCount} transaksi berhasil, ${errorCount} gagal. Periksa console untuk detail.`);
         console.error("Import errors:", errors);
       } else {
-        toast.error(`Gagal mengimport semua transaksi. ${errors[0]}`);
+        toast.error(`Gagal mengimport semua transaksi. ${errors.length > 0 ? errors[0] : 'Tidak ada data valid'}`);
         console.error("Import errors:", errors);
       }
     } catch (err: any) {
