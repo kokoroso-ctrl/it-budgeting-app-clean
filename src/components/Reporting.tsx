@@ -409,14 +409,15 @@ export default function Reporting() {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-gray-800 font-bold">
-                      <td colSpan={6} className="py-2 px-1 text-right">TOTAL:</td>
-                      <td className="text-right py-2 px-1">Rp {calculateTotal().toLocaleString("id-ID")}</td>
-                      <td colSpan={3}></td>
-                    </tr>
-                  </tfoot>
                 </table>
+                
+                {/* Total Section - Outside table to prevent repetition on every page */}
+                <div className="mt-3 pt-2 border-t-2 border-gray-800">
+                  <div className="flex justify-between items-center font-bold text-[10px]">
+                    <span>TOTAL:</span>
+                    <span>Rp {calculateTotal().toLocaleString("id-ID")}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Footer with Category Summary */}
