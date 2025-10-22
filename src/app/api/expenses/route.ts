@@ -71,43 +71,64 @@ function validateExpenseData(data: any, isUpdate: boolean = false): { isValid: b
 
   const category = data.category || '';
   
-  if (data.warranty !== undefined && data.warranty !== null) {
-    if (category !== 'Hardware') {
-      return { isValid: false, error: 'Warranty field is only applicable for Hardware category' };
+  // Only validate warranty fields if they have actual values AND category is Hardware
+  if (data.warranty !== undefined && data.warranty !== null && data.warranty !== '') {
+    if (category === 'Hardware') {
+      if (!VALID_WARRANTY_VALUES.includes(data.warranty)) {
+        return { isValid: false, error: `Warranty must be one of: ${VALID_WARRANTY_VALUES.join(', ')}` };
+      }
     }
-    if (!VALID_WARRANTY_VALUES.includes(data.warranty)) {
-      return { isValid: false, error: `Warranty must be one of: ${VALID_WARRANTY_VALUES.join(', ')}` };
-    }
+    // If category is NOT Hardware but warranty is provided, we'll ignore it (not reject)
   }
 
-  if (data.expiredWarranty !== undefined && data.expiredWarranty !== null) {
-    if (category !== 'Hardware') {
-      return { isValid: false, error: 'Expired warranty field is only applicable for Hardware category' };
+  if (data.expiredWarranty !== undefined && data.expiredWarranty !== null && data.expiredWarranty !== '') {
+    if (category === 'Hardware') {
+      if (!isValidDate(data.expiredWarranty)) {
+        return { isValid: false, error: 'Expired warranty must be a valid ISO date string' };
+      }
     }
-    if (!isValidDate(data.expiredWarranty)) {
-      return { isValid: false, error: 'Expired warranty must be a valid ISO date string' };
-    }
+    // If category is NOT Hardware but expiredWarranty is provided, we'll ignore it (not reject)
   }
 
-  if (data.licenseType !== undefined && data.licenseType !== null) {
-    if (category !== 'Software' && category !== 'Website') {
-      return { isValid: false, error: 'License type field is only applicable for Software/Website categories' };
+  // Only validate license fields if they have actual values AND category is Software/Website
+  if (data.licenseType !== undefined && data.licenseType !== null && data.licenseType !== '') {
+    if (category === 'Software' || category === 'Website') {
+      if (!VALID_LICENSE_TYPES.includes(data.licenseType)) {
+        return { isValid: false, error: `License type must be one of: ${VALID_LICENSE_TYPES.join(', ')}` };
+      }
     }
-    if (!VALID_LICENSE_TYPES.includes(data.licenseType)) {
-      return { isValid: false, error: `License type must be one of: ${VALID_LICENSE_TYPES.join(', ')}` };
-    }
+    // If category is NOT Software/Website but licenseType is provided, we'll ignore it (not reject)
   }
 
-  if (data.expiredSubscription !== undefined && data.expiredSubscription !== null) {
-    if (category !== 'Software' && category !== 'Website') {
-      return { isValid: false, error: 'Expired subscription field is only applicable for Software/Website categories' };
+  if (data.expiredSubscription !== undefined && data.expiredSubscription !== null && data.expiredSubscription !== '') {
+    if (category === 'Software' || category === 'Website') {
+      if (!isValidDate(data.expiredSubscription)) {
+        return { isValid: false, error: 'Expired subscription must be a valid ISO date string' };
+      }
     }
-    if (!isValidDate(data.expiredSubscription)) {
-      return { isValid: false, error: 'Expired subscription must be a valid ISO date string' };
-    }
+    // If category is NOT Software/Website but expiredSubscription is provided, we'll ignore it (not reject)
   }
 
   return { isValid: true };
+}
+
+// Helper function to clean data based on category
+function cleanDataByCategory(data: any): any {
+  const cleaned = { ...data };
+  
+  // Only keep warranty fields for Hardware
+  if (cleaned.category !== 'Hardware') {
+    cleaned.warranty = null;
+    cleaned.expiredWarranty = null;
+  }
+  
+  // Only keep license fields for Software/Website
+  if (cleaned.category !== 'Software' && cleaned.category !== 'Website') {
+    cleaned.licenseType = null;
+    cleaned.expiredSubscription = null;
+  }
+  
+  return cleaned;
 }
 
 export async function GET(request: NextRequest) {
@@ -206,18 +227,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Clean data based on category
+    const cleanedData = cleanDataByCategory(body);
+
     const insertData: any = {
-      date: body.date,
-      vendor: body.vendor.trim(),
-      category: body.category,
-      description: body.description.trim(),
-      amount: typeof body.amount === 'string' ? parseFloat(body.amount) : body.amount,
-      status: body.status,
-      poNumber: body.poNumber.trim(),
-      warranty: body.warranty || null,
-      expiredWarranty: body.expiredWarranty || null,
-      licenseType: body.licenseType || null,
-      expiredSubscription: body.expiredSubscription || null,
+      date: cleanedData.date,
+      vendor: cleanedData.vendor.trim(),
+      category: cleanedData.category,
+      description: cleanedData.description.trim(),
+      amount: typeof cleanedData.amount === 'string' ? parseFloat(cleanedData.amount) : cleanedData.amount,
+      status: cleanedData.status,
+      poNumber: cleanedData.poNumber.trim(),
+      warranty: cleanedData.warranty || null,
+      expiredWarranty: cleanedData.expiredWarranty || null,
+      licenseType: cleanedData.licenseType || null,
+      expiredSubscription: cleanedData.expiredSubscription || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -269,23 +293,26 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Clean data based on category
+    const cleanedData = cleanDataByCategory(body);
+
     const updateData: any = {
       updatedAt: new Date().toISOString()
     };
 
-    if (body.date !== undefined) updateData.date = body.date;
-    if (body.vendor !== undefined) updateData.vendor = body.vendor.trim();
-    if (body.category !== undefined) updateData.category = body.category;
-    if (body.description !== undefined) updateData.description = body.description.trim();
-    if (body.amount !== undefined) {
-      updateData.amount = typeof body.amount === 'string' ? parseFloat(body.amount) : body.amount;
+    if (cleanedData.date !== undefined) updateData.date = cleanedData.date;
+    if (cleanedData.vendor !== undefined) updateData.vendor = cleanedData.vendor.trim();
+    if (cleanedData.category !== undefined) updateData.category = cleanedData.category;
+    if (cleanedData.description !== undefined) updateData.description = cleanedData.description.trim();
+    if (cleanedData.amount !== undefined) {
+      updateData.amount = typeof cleanedData.amount === 'string' ? parseFloat(cleanedData.amount) : cleanedData.amount;
     }
-    if (body.status !== undefined) updateData.status = body.status;
-    if (body.poNumber !== undefined) updateData.poNumber = body.poNumber.trim();
-    if (body.warranty !== undefined) updateData.warranty = body.warranty;
-    if (body.expiredWarranty !== undefined) updateData.expiredWarranty = body.expiredWarranty;
-    if (body.licenseType !== undefined) updateData.licenseType = body.licenseType;
-    if (body.expiredSubscription !== undefined) updateData.expiredSubscription = body.expiredSubscription;
+    if (cleanedData.status !== undefined) updateData.status = cleanedData.status;
+    if (cleanedData.poNumber !== undefined) updateData.poNumber = cleanedData.poNumber.trim();
+    if (cleanedData.warranty !== undefined) updateData.warranty = cleanedData.warranty;
+    if (cleanedData.expiredWarranty !== undefined) updateData.expiredWarranty = cleanedData.expiredWarranty;
+    if (cleanedData.licenseType !== undefined) updateData.licenseType = cleanedData.licenseType;
+    if (cleanedData.expiredSubscription !== undefined) updateData.expiredSubscription = cleanedData.expiredSubscription;
 
     const updated = await db.update(expenses)
       .set(updateData)
