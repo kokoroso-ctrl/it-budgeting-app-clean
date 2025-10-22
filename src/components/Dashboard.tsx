@@ -110,6 +110,20 @@ export default function Dashboard() {
   const parseExcelDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
     
+    // If it's a number, it's likely an Excel serial date
+    if (typeof dateValue === 'number') {
+      // Excel serial date to JS Date
+      // Excel counts from 1900-01-01 (with 25569 offset for Unix epoch)
+      const utc_days = Math.floor(dateValue - 25569);
+      const utc_value = utc_days * 86400;
+      const date_info = new Date(utc_value * 1000);
+      const jsDate = new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate());
+      
+      if (!isNaN(jsDate.getTime())) {
+        return jsDate.toISOString();
+      }
+    }
+    
     // If it's already a Date object
     if (dateValue instanceof Date) {
       return dateValue.toISOString();
