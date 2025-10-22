@@ -114,7 +114,7 @@ export default function Dashboard() {
   ).sort().reverse();
 
   // Get unique categories
-  const categories = ["Hardware", "Software", "Website", "Personnel", "Services", "Infrastructure"];
+  const categories = ["Hardware", "Software", "Website", "Services", "Infrastructure"];
 
   // Export to Excel
   const handleExportExcel = () => {
@@ -534,7 +534,6 @@ export default function Dashboard() {
                             <SelectItem value="Hardware">Hardware</SelectItem>
                             <SelectItem value="Software">Software</SelectItem>
                             <SelectItem value="Website">Website</SelectItem>
-                            <SelectItem value="Personnel">Personnel</SelectItem>
                             <SelectItem value="Services">Services</SelectItem>
                             <SelectItem value="Infrastructure">Infrastructure</SelectItem>
                           </SelectContent>
