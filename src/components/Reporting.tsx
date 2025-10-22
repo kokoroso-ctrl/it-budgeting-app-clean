@@ -33,6 +33,7 @@ export default function Reporting() {
   const [filterType, setFilterType] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedYear, setSelectedYear] = useState("2025");
   const [loading, setLoading] = useState(false);
   const [forecastData, setForecastData] = useState<any[]>([]);
   const [varianceData, setVarianceData] = useState<any[]>([]);
@@ -41,7 +42,7 @@ export default function Reporting() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   useEffect(() => {
     applyFilters();
@@ -56,22 +57,22 @@ export default function Reporting() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch budgets for 2025
-      const budgetsRes = await fetch("/api/budgets?year=2025");
+      // Fetch budgets for selected year
+      const budgetsRes = await fetch(`/api/budgets?year=${selectedYear}`);
       const budgetsData = await budgetsRes.json();
       setBudgets(budgetsData);
 
-      // Fetch expenses (will filter for 2025 in calculation)
+      // Fetch expenses
       const expensesRes = await fetch("/api/expenses");
       const expensesData = await expensesRes.json();
       
-      // Filter only 2025 expenses
-      const expenses2025 = expensesData.filter((exp: any) => {
+      // Filter only selected year expenses
+      const expensesForYear = expensesData.filter((exp: any) => {
         const year = new Date(exp.date).getFullYear();
-        return year === 2025;
+        return year === parseInt(selectedYear);
       });
       
-      setExpenses(expenses2025);
+      setExpenses(expensesForYear);
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -247,7 +248,7 @@ export default function Reporting() {
       <div className="flex justify-between items-center print:hidden">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Laporan & Analitik</h2>
-          <p className="text-muted-foreground">Laporan pengeluaran dan analisis anggaran periode 2025</p>
+          <p className="text-muted-foreground">Laporan pengeluaran dan analisis anggaran periode {selectedYear}</p>
         </div>
       </div>
 
@@ -358,7 +359,7 @@ export default function Reporting() {
 
               {/* Report Title */}
               <div className="text-center">
-                <h2 className="text-lg font-bold">LAPORAN PENGELUARAN IT 2025</h2>
+                <h2 className="text-lg font-bold">LAPORAN PENGELUARAN IT {selectedYear}</h2>
                 {filterType === "month" && selectedMonth && (
                   <p className="text-xs mt-1">
                     Periode: {new Date(selectedMonth + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
@@ -442,6 +443,28 @@ export default function Reporting() {
 
           {/* Analytics Sections */}
           <div className="print:hidden">
+            {/* Year Filter for Analytics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Filter Analitik</CardTitle>
+                <CardDescription>Pilih tahun untuk analisis anggaran</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="w-full md:w-64">
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Tahun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024">2024</SelectItem>
+                      <SelectItem value="2025">2025</SelectItem>
+                      <SelectItem value="2026">2026</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Alerts Section */}
             {alerts.length > 0 && (
               <div className="grid gap-4 md:grid-cols-3">
@@ -468,7 +491,7 @@ export default function Reporting() {
             {/* Forecast Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Ramalan Anggaran 2025</CardTitle>
+                <CardTitle>Ramalan Anggaran {selectedYear}</CardTitle>
                 <CardDescription>Pengeluaran aktual vs ramalan</CardDescription>
               </CardHeader>
               <CardContent>
@@ -505,7 +528,7 @@ export default function Reporting() {
             {/* Variance Report Table */}
             <Card>
               <CardHeader>
-                <CardTitle>Laporan Varians Anggaran 2025</CardTitle>
+                <CardTitle>Laporan Varians Anggaran {selectedYear}</CardTitle>
                 <CardDescription>Rincian detail per kategori</CardDescription>
               </CardHeader>
               <CardContent>
@@ -549,7 +572,7 @@ export default function Reporting() {
             {/* Beautiful Variance Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Visualisasi Varians 2025</CardTitle>
+                <CardTitle>Visualisasi Varians {selectedYear}</CardTitle>
                 <CardDescription>Anggaran vs pengeluaran aktual per kategori</CardDescription>
               </CardHeader>
               <CardContent>
