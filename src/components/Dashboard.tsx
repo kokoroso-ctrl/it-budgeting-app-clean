@@ -178,18 +178,24 @@ export default function Dashboard() {
             status: row['Status'] || 'pending',
           };
 
-          // Optional fields
-          if (row['Status Garansi']) {
-            expenseData.warranty = row['Status Garansi'];
+          // Only include warranty fields for Hardware category
+          if (expenseData.category === "Hardware") {
+            if (row['Status Garansi']) {
+              expenseData.warranty = row['Status Garansi'];
+            }
+            if (row['Expired Garansi']) {
+              expenseData.expiredWarranty = parseExcelDate(row['Expired Garansi']);
+            }
           }
-          if (row['Expired Garansi']) {
-            expenseData.expiredWarranty = parseExcelDate(row['Expired Garansi']);
-          }
-          if (row['Jenis Lisensi']) {
-            expenseData.licenseType = row['Jenis Lisensi'];
-          }
-          if (row['Expired Lisensi']) {
-            expenseData.expiredSubscription = parseExcelDate(row['Expired Lisensi']);
+
+          // Only include license fields for Software/Website categories
+          if (expenseData.category === "Software" || expenseData.category === "Website") {
+            if (row['Jenis Lisensi']) {
+              expenseData.licenseType = row['Jenis Lisensi'];
+            }
+            if (row['Expired Lisensi']) {
+              expenseData.expiredSubscription = parseExcelDate(row['Expired Lisensi']);
+            }
           }
 
           // Validate required fields
