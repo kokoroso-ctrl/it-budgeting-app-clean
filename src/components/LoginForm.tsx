@@ -106,18 +106,6 @@ export default function LoginForm() {
           <p className="text-center text-sm text-gray-500 mt-6">
             Masuk menggunakan email dan password
           </p>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Belum punya akun?{" "}
-              <button
-                onClick={() => router.push("/register")}
-                className="text-green-600 hover:text-green-700 font-medium underline"
-              >
-                Daftar sebagai Admin/Superuser
-              </button>
-            </p>
-          </div>
         </div>
       </div>
     </div>
