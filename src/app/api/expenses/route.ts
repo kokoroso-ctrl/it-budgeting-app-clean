@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { expenses } from '@/db/schema';
 import { eq, like, and, or, desc, asc } from 'drizzle-orm';
 
-const VALID_CATEGORIES = ['Hardware', 'Software', 'Website', 'Personnel', 'Services', 'Infrastructure'];
+const VALID_CATEGORIES = ['Hardware', 'Software', 'Website', 'Personnel', 'Services', 'Infrastructure', 'Accessories & Office Supply'];
 const VALID_STATUSES = ['approved', 'pending', 'rejected'];
 const VALID_WARRANTY_VALUES = ['Ada', 'Tidak Ada'];
 const VALID_LICENSE_TYPES = ['Subscription', 'Perpetual', 'OEM'];
