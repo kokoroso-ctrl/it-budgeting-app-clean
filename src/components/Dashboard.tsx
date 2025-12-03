@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notifiedExpiries, setNotifiedExpiries] = useState<Set<number>>(new Set());
   
   // Filter states
   const [periodFilter, setPeriodFilter] = useState("all");
@@ -75,6 +76,84 @@ export default function Dashboard() {
       }));
     }
   }, [formData.category]);
+
+  // Check for expiring items and send Telegram notifications
+  useEffect(() => {
+    if (expenses.length > 0) {
+      checkExpiringItems();
+    }
+  }, [expenses]);
+
+  const checkExpiringItems = async () => {
+    const threeWeeksFromNow = new Date();
+    threeWeeksFromNow.setDate(threeWeeksFromNow.getDate() + 21);
+    
+    const expiringItems: string[] = [];
+
+    expenses.forEach((expense) => {
+      // Check warranty expiry
+      if (expense.expiredWarranty && !notifiedExpiries.has(expense.id)) {
+        const expiryDate = new Date(expense.expiredWarranty);
+        if (expiryDate <= threeWeeksFromNow && expiryDate >= new Date()) {
+          const daysLeft = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          expiringItems.push(
+            `⚠️ <b>GARANSI AKAN EXPIRED</b>\n` +
+            `📦 Item: ${expense.description}\n` +
+            `🏢 Vendor: ${expense.vendor}\n` +
+            `📅 Expired: ${formatDate(expense.expiredWarranty)}\n` +
+            `⏰ Sisa: ${daysLeft} hari\n`
+          );
+          setNotifiedExpiries(prev => new Set([...prev, expense.id]));
+        }
+      }
+
+      // Check license expiry
+      if (expense.expiredSubscription && !notifiedExpiries.has(expense.id + 1000000)) {
+        const expiryDate = new Date(expense.expiredSubscription);
+        if (expiryDate <= threeWeeksFromNow && expiryDate >= new Date()) {
+          const daysLeft = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          expiringItems.push(
+            `⚠️ <b>LISENSI AKAN EXPIRED</b>\n` +
+            `📦 Item: ${expense.description}\n` +
+            `🏢 Vendor: ${expense.vendor}\n` +
+            `🔐 Jenis: ${expense.licenseType}\n` +
+            `📅 Expired: ${formatDate(expense.expiredSubscription)}\n` +
+            `⏰ Sisa: ${daysLeft} hari\n`
+          );
+          setNotifiedExpiries(prev => new Set([...prev, expense.id + 1000000]));
+        }
+      }
+    });
+
+    // Send notifications if there are expiring items
+    if (expiringItems.length > 0) {
+      const message = `🚨 <b>PERINGATAN EXPIRED MAMAGREEN IT</b> 🚨\n\n` +
+        expiringItems.join('\n---\n') +
+        `\n📊 Total: ${expiringItems.length} item akan expired dalam 3 minggu`;
+      
+      try {
+        await fetch('/api/telegram/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+      } catch (error) {
+        console.error('Failed to send Telegram notification:', error);
+      }
+    }
+  };
+
+  // Check if date is expiring within 3 weeks
+  const isExpiringSoon = (dateString: string | null): boolean => {
+    if (!dateString) return false;
+    
+    const expiryDate = new Date(dateString);
+    const today = new Date();
+    const threeWeeksFromNow = new Date();
+    threeWeeksFromNow.setDate(today.getDate() + 21);
+    
+    return expiryDate <= threeWeeksFromNow && expiryDate >= today;
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -578,6 +657,22 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <style jsx>{`
+        @keyframes blink-red {
+          0%, 100% { 
+            color: #ef4444;
+            font-weight: 700;
+          }
+          50% { 
+            color: #dc2626;
+            font-weight: 900;
+          }
+        }
+        .expiring-soon {
+          animation: blink-red 1s infinite;
+        }
+      `}</style>
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Transaksi Pengeluaran</h2>
@@ -959,9 +1054,13 @@ export default function Dashboard() {
                       <TableCell>{expense.poNumber || "-"}</TableCell>
                       <TableCell className="text-right font-medium">Rp {expense.amount.toLocaleString('id-ID')}</TableCell>
                       <TableCell>{expense.warranty || "-"}</TableCell>
-                      <TableCell>{expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}</TableCell>
+                      <TableCell className={isExpiringSoon(expense.expiredWarranty) ? "expiring-soon" : ""}>
+                        {expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}
+                      </TableCell>
                       <TableCell>{expense.licenseType || "-"}</TableCell>
-                      <TableCell>{expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}</TableCell>
+                      <TableCell className={isExpiringSoon(expense.expiredSubscription) ? "expiring-soon" : ""}>
+                        {expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}
+                      </TableCell>
                       <TableCell>
                         <Select 
                           value={expense.status} 
