@@ -657,7 +657,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes blink-red {
           0%, 100% { 
             color: #ef4444;
@@ -671,7 +671,7 @@ export default function Dashboard() {
         .expiring-soon {
           animation: blink-red 1s infinite;
         }
-      `}</style>
+      `}} />
 
       <div className="flex justify-between items-center">
         <div>
