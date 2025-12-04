@@ -113,19 +113,26 @@ function validateExpenseData(data: any, isUpdate: boolean = false): { isValid: b
 }
 
 // Helper function to clean data based on category
-function cleanDataByCategory(data: any): any {
+function cleanDataByCategory(data: any, existingCategory?: string): any {
   const cleaned = { ...data };
   
-  // Only keep warranty fields for Hardware
-  if (cleaned.category !== 'Hardware') {
-    cleaned.warranty = null;
-    cleaned.expiredWarranty = null;
-  }
+  // Get the category to use for cleaning
+  const categoryToCheck = cleaned.category || existingCategory;
   
-  // Only keep license fields for Software/Website
-  if (cleaned.category !== 'Software' && cleaned.category !== 'Website') {
-    cleaned.licenseType = null;
-    cleaned.expiredSubscription = null;
+  // Only clean fields if category is explicitly provided in the update
+  // This prevents accidental deletion when doing partial updates (e.g., status only)
+  if (cleaned.category !== undefined) {
+    // Only keep warranty fields for Hardware
+    if (categoryToCheck !== 'Hardware') {
+      cleaned.warranty = null;
+      cleaned.expiredWarranty = null;
+    }
+    
+    // Only keep license fields for Software/Website
+    if (categoryToCheck !== 'Software' && categoryToCheck !== 'Website') {
+      cleaned.licenseType = null;
+      cleaned.expiredSubscription = null;
+    }
   }
   
   return cleaned;
@@ -294,7 +301,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Clean data based on category
-    const cleanedData = cleanDataByCategory(body);
+    const cleanedData = cleanDataByCategory(body, existing[0].category);
 
     const updateData: any = {
       updatedAt: new Date().toISOString()
