@@ -339,20 +339,17 @@ export default function Reporting() {
             <div className="space-y-4">
               {/* Company Letterhead */}
               <div className="border-b-2 border-gray-800 pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src="https://mamagreen.com/wp-content/uploads/2024/10/MAMAGREEN-PRIMARY-LOGO-100px.jpg" 
+                    alt="Mamagreen Logo" 
+                    className="h-12"
+                  />
                   <div>
-                    <img 
-                      src="https://mamagreen.com/wp-content/uploads/2024/10/MAMAGREEN-PRIMARY-LOGO-100px.jpg" 
-                      alt="Mamagreen Logo" 
-                      className="h-12 mb-2"
-                    />
                     <h1 className="text-xl font-bold">PT MAMAGREEN PACIFIC</h1>
                     <p className="text-xs mt-1">
                       Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
                     </p>
-                  </div>
-                  <div className="text-right text-xs">
-                    <p>www.mamagreen.com</p>
                   </div>
                 </div>
               </div>
