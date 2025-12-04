@@ -62,8 +62,8 @@ export default function Reporting() {
       const budgetsData = await budgetsRes.json();
       setBudgets(budgetsData);
 
-      // Fetch expenses
-      const expensesRes = await fetch("/api/expenses");
+      // Fetch expenses with higher limit
+      const expensesRes = await fetch("/api/expenses?limit=1000&sort=date&order=desc");
       const expensesData = await expensesRes.json();
       
       // Filter only selected year expenses
