@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import Link from "next/link";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -103,18 +102,6 @@ export default function LoginForm() {
               {isLoading ? "Memproses..." : "Masuk"}
             </Button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Belum punya akun?{" "}
-              <Link
-                href="/register"
-                className="text-green-600 hover:text-green-700 font-semibold"
-              >
-                Daftar di sini
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>
