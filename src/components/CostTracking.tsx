@@ -26,7 +26,6 @@ export default function CostTracking() {
   const [formData, setFormData] = useState({
     name: "",
     category: "Hardware",
-    totalSpent: "0",
     contracts: "0",
     status: "active",
   });
@@ -104,7 +103,6 @@ export default function CostTracking() {
     setFormData({
       name: vendor.name,
       category: vendor.category,
-      totalSpent: vendor.totalSpent.toString(),
       contracts: vendor.contracts.toString(),
       status: vendor.status,
     });
@@ -140,7 +138,6 @@ export default function CostTracking() {
       const payload = {
         name: formData.name,
         category: formData.category,
-        totalSpent: parseFloat(formData.totalSpent),
         contracts: parseInt(formData.contracts),
         status: formData.status,
       };
@@ -188,7 +185,6 @@ export default function CostTracking() {
     setFormData({
       name: "",
       category: "Hardware",
-      totalSpent: "0",
       contracts: "0",
       status: "active",
     });
@@ -228,7 +224,7 @@ export default function CostTracking() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Daftar Vendor</CardTitle>
-              <CardDescription>Ringkasan vendor dan kontrak mereka</CardDescription>
+              <CardDescription>Total pengeluaran dihitung otomatis dari akumulasi transaksi</CardDescription>
             </div>
             <div className="flex space-x-2">
               <div className="relative">
@@ -271,7 +267,7 @@ export default function CostTracking() {
                   <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit Vendor" : "Tambah Vendor Baru"}</DialogTitle>
                     <DialogDescription>
-                      {isEditMode ? "Update informasi vendor" : "Tambahkan vendor baru ke sistem"}
+                      {isEditMode ? "Update informasi vendor" : "Tambahkan vendor baru ke sistem. Total pengeluaran akan dihitung otomatis dari transaksi."}
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -303,29 +299,16 @@ export default function CostTracking() {
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="totalSpent">Total Pengeluaran (Rp)</Label>
-                        <Input
-                          id="totalSpent"
-                          type="number"
-                          placeholder="0"
-                          value={formData.totalSpent}
-                          onChange={(e) => setFormData({ ...formData, totalSpent: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="contracts">Jumlah Kontrak</Label>
-                        <Input
-                          id="contracts"
-                          type="number"
-                          placeholder="0"
-                          value={formData.contracts}
-                          onChange={(e) => setFormData({ ...formData, contracts: e.target.value })}
-                          required
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contracts">Jumlah Kontrak</Label>
+                      <Input
+                        id="contracts"
+                        type="number"
+                        placeholder="0"
+                        value={formData.contracts}
+                        onChange={(e) => setFormData({ ...formData, contracts: e.target.value })}
+                        required
+                      />
                     </div>
 
                     <div className="space-y-2">
