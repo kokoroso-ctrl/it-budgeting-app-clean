@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { vendors } from '@/db/schema';
-import { eq, like, and, or, desc, asc } from 'drizzle-orm';
+import { vendors, expenses } from '@/db/schema';
+import { eq, like, and, or, desc, asc, sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +29,16 @@ export async function GET(request: NextRequest) {
         }, { status: 404 });
       }
 
-      return NextResponse.json(vendor[0], { status: 200 });
+      // Calculate total spent from expenses
+      const totalSpentResult = await db.select({
+        total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+      })
+      .from(expenses)
+      .where(eq(expenses.vendor, vendor[0].name));
+
+      const totalSpent = totalSpentResult[0]?.total || 0;
+
+      return NextResponse.json({ ...vendor[0], totalSpent }, { status: 200 });
     }
 
     // List vendors with pagination, search, filtering, and sorting
@@ -67,21 +76,49 @@ export async function GET(request: NextRequest) {
       query = query.where(and(...conditions));
     }
 
-    // Apply sorting
-    const sortColumn = sortField === 'totalSpent' ? vendors.totalSpent :
-                       sortField === 'contracts' ? vendors.contracts :
-                       sortField === 'createdAt' ? vendors.createdAt :
-                       sortField === 'updatedAt' ? vendors.updatedAt :
-                       sortField === 'category' ? vendors.category :
-                       vendors.name;
+    // Apply sorting (except totalSpent which needs to be calculated)
+    if (sortField !== 'totalSpent') {
+      const sortColumn = sortField === 'contracts' ? vendors.contracts :
+                         sortField === 'createdAt' ? vendors.createdAt :
+                         sortField === 'updatedAt' ? vendors.updatedAt :
+                         sortField === 'category' ? vendors.category :
+                         vendors.name;
 
-    query = sortOrder === 'desc' 
-      ? query.orderBy(desc(sortColumn))
-      : query.orderBy(asc(sortColumn));
+      query = sortOrder === 'desc' 
+        ? query.orderBy(desc(sortColumn))
+        : query.orderBy(asc(sortColumn));
+    }
 
     const results = await query.limit(limit).offset(offset);
 
-    return NextResponse.json(results, { status: 200 });
+    // Calculate total spent for each vendor from expenses
+    const vendorsWithTotals = await Promise.all(
+      results.map(async (vendor) => {
+        const totalSpentResult = await db.select({
+          total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+        })
+        .from(expenses)
+        .where(eq(expenses.vendor, vendor.name));
+
+        const totalSpent = totalSpentResult[0]?.total || 0;
+
+        return {
+          ...vendor,
+          totalSpent
+        };
+      })
+    );
+
+    // Sort by totalSpent if requested
+    if (sortField === 'totalSpent') {
+      vendorsWithTotals.sort((a, b) => {
+        return sortOrder === 'desc' 
+          ? b.totalSpent - a.totalSpent 
+          : a.totalSpent - b.totalSpent;
+      });
+    }
+
+    return NextResponse.json(vendorsWithTotals, { status: 200 });
   } catch (error) {
     console.error('GET error:', error);
     return NextResponse.json({ 
@@ -93,7 +130,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, category, totalSpent, contracts, status } = body;
+    const { name, category, contracts, status } = body;
 
     // Validate required fields
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -143,15 +180,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate totalSpent
-    const validatedTotalSpent = totalSpent !== undefined ? parseFloat(totalSpent) : 0;
-    if (isNaN(validatedTotalSpent) || validatedTotalSpent < 0) {
-      return NextResponse.json({ 
-        error: "Total spent must be a non-negative number",
-        code: "INVALID_TOTAL_SPENT" 
-      }, { status: 400 });
-    }
-
     // Validate contracts
     const validatedContracts = contracts !== undefined ? parseInt(contracts) : 0;
     if (isNaN(validatedContracts) || validatedContracts < 0 || !Number.isInteger(parseFloat(contracts || '0'))) {
@@ -161,13 +189,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create vendor
+    // Create vendor (totalSpent removed - will be calculated from expenses)
     const now = new Date().toISOString();
     const newVendor = await db.insert(vendors)
       .values({
         name: trimmedName,
         category: trimmedCategory,
-        totalSpent: validatedTotalSpent,
+        totalSpent: 0, // Set to 0, will be calculated from expenses
         contracts: validatedContracts,
         status: status,
         createdAt: now,
@@ -175,7 +203,16 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(newVendor[0], { status: 201 });
+    // Calculate total spent from expenses
+    const totalSpentResult = await db.select({
+      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+    })
+    .from(expenses)
+    .where(eq(expenses.vendor, trimmedName));
+
+    const totalSpent = totalSpentResult[0]?.total || 0;
+
+    return NextResponse.json({ ...newVendor[0], totalSpent }, { status: 201 });
   } catch (error) {
     console.error('POST error:', error);
     return NextResponse.json({ 
@@ -210,7 +247,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, category, totalSpent, contracts, status } = body;
+    const { name, category, contracts, status } = body;
 
     const updates: any = {
       updatedAt: new Date().toISOString()
@@ -255,17 +292,7 @@ export async function PUT(request: NextRequest) {
       updates.category = category.trim();
     }
 
-    // Validate and add totalSpent if provided
-    if (totalSpent !== undefined) {
-      const validatedTotalSpent = parseFloat(totalSpent);
-      if (isNaN(validatedTotalSpent) || validatedTotalSpent < 0) {
-        return NextResponse.json({ 
-          error: "Total spent must be a non-negative number",
-          code: "INVALID_TOTAL_SPENT" 
-        }, { status: 400 });
-      }
-      updates.totalSpent = validatedTotalSpent;
-    }
+    // totalSpent removed - will be calculated from expenses
 
     // Validate and add contracts if provided
     if (contracts !== undefined) {
@@ -296,7 +323,17 @@ export async function PUT(request: NextRequest) {
       .where(eq(vendors.id, parseInt(id)))
       .returning();
 
-    return NextResponse.json(updated[0], { status: 200 });
+    // Calculate total spent from expenses
+    const vendorName = updated[0].name;
+    const totalSpentResult = await db.select({
+      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+    })
+    .from(expenses)
+    .where(eq(expenses.vendor, vendorName));
+
+    const totalSpent = totalSpentResult[0]?.total || 0;
+
+    return NextResponse.json({ ...updated[0], totalSpent }, { status: 200 });
   } catch (error) {
     console.error('PUT error:', error);
     return NextResponse.json({ 
