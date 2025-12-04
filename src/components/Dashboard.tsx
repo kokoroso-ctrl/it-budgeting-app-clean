@@ -160,7 +160,7 @@ export default function Dashboard() {
   const fetchExpenses = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/expenses');
+      const response = await fetch('/api/expenses?limit=1000&sort=date&order=desc');
       if (!response.ok) throw new Error('Failed to fetch expenses');
       const data = await response.json();
       setExpenses(data);
