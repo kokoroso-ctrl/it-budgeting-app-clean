@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function CostTracking() {
   const [vendors, setVendors] = useState<any[]>([]);
@@ -15,6 +18,18 @@ export default function CostTracking() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "Hardware",
+    totalSpent: "0",
+    contracts: "0",
+    status: "active",
+  });
 
   useEffect(() => {
     fetchVendors();
@@ -35,6 +50,7 @@ export default function CostTracking() {
     } catch (err) {
       setError('Gagal memuat vendor. Silakan coba lagi.');
       console.error('Fetch vendors error:', err);
+      toast.error("Gagal memuat vendor");
     } finally {
       setIsLoading(false);
     }
@@ -74,9 +90,114 @@ export default function CostTracking() {
       }
 
       await fetchVendors();
+      toast.success("Status vendor berhasil diubah");
     } catch (err: any) {
       setError(err.message || 'Gagal mengubah status');
+      toast.error(err.message || 'Gagal mengubah status');
       console.error('Status update error:', err);
+    }
+  };
+
+  const handleEdit = (vendor: any) => {
+    setIsEditMode(true);
+    setEditingId(vendor.id);
+    setFormData({
+      name: vendor.name,
+      category: vendor.category,
+      totalSpent: vendor.totalSpent.toString(),
+      contracts: vendor.contracts.toString(),
+      status: vendor.status,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus vendor ini?")) return;
+
+    try {
+      const response = await fetch(`/api/vendors?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menghapus vendor');
+      }
+
+      await fetchVendors();
+      toast.success("Vendor berhasil dihapus");
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menghapus vendor");
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        name: formData.name,
+        category: formData.category,
+        totalSpent: parseFloat(formData.totalSpent),
+        contracts: parseInt(formData.contracts),
+        status: formData.status,
+      };
+
+      if (isEditMode && editingId !== null) {
+        const response = await fetch(`/api/vendors?id=${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Gagal mengupdate vendor');
+        }
+        toast.success("Vendor berhasil diupdate");
+      } else {
+        const response = await fetch('/api/vendors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Gagal menambahkan vendor');
+        }
+        toast.success("Vendor berhasil ditambahkan");
+      }
+
+      await fetchVendors();
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err: any) {
+      console.error('Submit error:', err);
+      toast.error(err.message || (isEditMode ? "Gagal mengupdate vendor" : "Gagal menambahkan vendor"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setIsEditMode(false);
+    setEditingId(null);
+    setFormData({
+      name: "",
+      category: "Hardware",
+      totalSpent: "0",
+      contracts: "0",
+      status: "active",
+    });
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetForm();
     }
   };
 
@@ -139,6 +260,98 @@ export default function CostTracking() {
                   Clear
                 </Button>
               )}
+              <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+                <DialogTrigger asChild>
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tambah Vendor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>{isEditMode ? "Edit Vendor" : "Tambah Vendor Baru"}</DialogTitle>
+                    <DialogDescription>
+                      {isEditMode ? "Update informasi vendor" : "Tambahkan vendor baru ke sistem"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nama Vendor</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., Dell Indonesia"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Kategori</Label>
+                      <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Hardware">Hardware</SelectItem>
+                          <SelectItem value="Software">Software</SelectItem>
+                          <SelectItem value="Website">Website</SelectItem>
+                          <SelectItem value="Services">Services</SelectItem>
+                          <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                          <SelectItem value="Accessories & Office Supply">Accessories & Office Supply</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="totalSpent">Total Pengeluaran (Rp)</Label>
+                        <Input
+                          id="totalSpent"
+                          type="number"
+                          placeholder="0"
+                          value={formData.totalSpent}
+                          onChange={(e) => setFormData({ ...formData, totalSpent: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contracts">Jumlah Kontrak</Label>
+                        <Input
+                          id="contracts"
+                          type="number"
+                          placeholder="0"
+                          value={formData.contracts}
+                          onChange={(e) => setFormData({ ...formData, contracts: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Aktif</SelectItem>
+                          <SelectItem value="inactive">Tidak Aktif</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
+                        Batal
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+                        {isSubmitting ? "Menyimpan..." : (isEditMode ? "Update Vendor" : "Tambah Vendor")}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -162,6 +375,7 @@ export default function CostTracking() {
                   <TableHead className="text-right">Total Pengeluaran</TableHead>
                   <TableHead className="text-center">Kontrak Aktif</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,6 +410,24 @@ export default function CostTracking() {
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(vendor)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(vendor.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
