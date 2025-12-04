@@ -18,6 +18,7 @@ const COLORS = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export default function Dashboard() {
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -47,6 +48,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchExpenses();
+    fetchVendors();
   }, []);
 
   // Clear irrelevant fields when category changes
@@ -167,6 +169,18 @@ export default function Dashboard() {
       toast.error("Gagal memuat data transaksi");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch('/api/vendors?status=active&sort=name&order=asc');
+      if (!response.ok) throw new Error('Failed to fetch vendors');
+      const data = await response.json();
+      setVendors(data);
+    } catch (err) {
+      console.error('Fetch vendors error:', err);
+      toast.error("Gagal memuat daftar vendor");
     }
   };
 
@@ -888,13 +902,32 @@ export default function Dashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="vendor">Vendor</Label>
-                        <Input
-                          id="vendor"
-                          placeholder="e.g., AWS, Microsoft"
-                          value={formData.vendor}
-                          onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                          required
-                        />
+                        <Select 
+                          value={formData.vendor} 
+                          onValueChange={(value) => setFormData({ ...formData, vendor: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih vendor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {vendors.length === 0 ? (
+                              <SelectItem value="no-vendor" disabled>
+                                Belum ada vendor
+                              </SelectItem>
+                            ) : (
+                              vendors.map((vendor) => (
+                                <SelectItem key={vendor.id} value={vendor.name}>
+                                  {vendor.name} - {vendor.category}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {vendors.length === 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Tambahkan vendor terlebih dahulu di menu Vendor Tracking
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="category">Kategori</Label>
