@@ -17,6 +17,7 @@ export default function BudgetPlanning() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     year: "2024",
@@ -47,6 +48,20 @@ export default function BudgetPlanning() {
     }
   };
 
+  const handleEdit = (budget: any) => {
+    setEditingBudget(budget);
+    setFormData({
+      name: budget.name,
+      year: budget.year.toString(),
+      quarter: budget.quarter,
+      category: budget.category,
+      amount: budget.amount.toString(),
+      description: budget.description || "",
+      approver: budget.approver || "",
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -59,25 +74,29 @@ export default function BudgetPlanning() {
         quarter: formData.quarter,
         category: formData.category,
         amount: parseFloat(formData.amount),
-        status: "draft",
-        createdBy: "Current User",
+        status: editingBudget ? editingBudget.status : "draft",
+        createdBy: editingBudget ? editingBudget.createdBy : "Current User",
         approver: formData.approver || null,
         description: formData.description || null,
       };
 
-      const response = await fetch('/api/budgets', {
-        method: 'POST',
+      const url = editingBudget ? `/api/budgets?id=${editingBudget.id}` : '/api/budgets';
+      const method = editingBudget ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create budget');
+        throw new Error(errorData.error || `Failed to ${editingBudget ? 'update' : 'create'} budget`);
       }
 
       await fetchBudgets();
       setIsDialogOpen(false);
+      setEditingBudget(null);
       setFormData({
         name: "",
         year: "2024",
@@ -92,6 +111,22 @@ export default function BudgetPlanning() {
       console.error('Submit error:', err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setEditingBudget(null);
+      setFormData({
+        name: "",
+        year: "2024",
+        quarter: "Q1",
+        category: "Hardware",
+        amount: "",
+        description: "",
+        approver: "",
+      });
     }
   };
 
@@ -161,7 +196,7 @@ export default function BudgetPlanning() {
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Budget Planning</h2>
           <p className="text-sm sm:text-base text-muted-foreground">Create and manage annual IT budgets</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
             <Button size="sm" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
@@ -170,9 +205,14 @@ export default function BudgetPlanning() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Create New Budget</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
+                {editingBudget ? 'Edit Budget' : 'Create New Budget'}
+              </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm">
-                Define a new budget allocation for your IT department
+                {editingBudget 
+                  ? 'Update the budget allocation details'
+                  : 'Define a new budget allocation for your IT department'
+                }
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -268,11 +308,11 @@ export default function BudgetPlanning() {
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting} className="w-full sm:w-auto">
+                <Button type="button" variant="outline" onClick={() => handleDialogClose(false)} disabled={isSubmitting} className="w-full sm:w-auto">
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                  {isSubmitting ? "Creating..." : "Create Budget"}
+                  {isSubmitting ? (editingBudget ? "Updating..." : "Creating...") : (editingBudget ? "Update Budget" : "Create Budget")}
                 </Button>
               </div>
             </form>
@@ -332,6 +372,15 @@ export default function BudgetPlanning() {
                     <p className="font-medium text-sm sm:text-base truncate">{budget.approver || "-"}</p>
                   </div>
                   <div className="col-span-2 lg:col-span-1 flex justify-start lg:justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEdit(budget)}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
