@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     // Create a minimal valid PDF file in base64
-    // This is a simple PDF with just a single page saying "Test Invoice"
     const pdfContent = `%PDF-1.4
 1 0 obj
 <<
@@ -63,17 +62,14 @@ startxref
 410
 %%EOF`;
 
-    // Convert PDF content to base64
-    const base64Pdf = Buffer.from(pdfContent).toString('base64');
-    const base64DataUri = `data:application/pdf;base64,${base64Pdf}`;
-
+    // Convert PDF content to buffer and create File object
+    const pdfBuffer = Buffer.from(pdfContent);
+    const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+    
     // Create FormData for the upload request
     const formData = new FormData();
     formData.append('expenseId', '310');
-    
-    // Create a Blob from the base64 data
-    const blob = await (await fetch(base64DataUri)).blob();
-    formData.append('file', blob, 'test-invoice.pdf');
+    formData.append('file', pdfBlob, 'test-invoice.pdf');
 
     // Get the base URL from the request
     const baseUrl = request.nextUrl.origin;
@@ -82,10 +78,6 @@ startxref
     const uploadResponse = await fetch(`${baseUrl}/api/expenses/upload-invoice`, {
       method: 'POST',
       body: formData,
-      headers: {
-        // Forward any authentication cookies from the original request
-        'cookie': request.headers.get('cookie') || '',
-      },
     });
 
     const responseData = await uploadResponse.json();
@@ -97,8 +89,8 @@ startxref
         expenseId: 310,
         filename: 'test-invoice.pdf',
         mimeType: 'application/pdf',
-        base64Length: base64Pdf.length,
-        pdfSize: Buffer.from(pdfContent).length,
+        base64Length: Buffer.from(pdfContent).toString('base64').length,
+        pdfSize: pdfBuffer.length,
       },
       uploadResponse: responseData,
       statusCode: uploadResponse.status,
