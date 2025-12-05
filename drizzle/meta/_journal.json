@@ -15,6 +15,13 @@
       "when": 1760941733338,
       "tag": "0001_peaceful_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1764899911996,
+      "tag": "0002_odd_colossus",
+      "breakpoints": true
     }
   ]
 }
