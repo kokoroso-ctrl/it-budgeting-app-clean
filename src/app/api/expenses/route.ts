@@ -166,7 +166,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(expense[0], { status: 200 });
     }
 
-    const limit = parseInt(searchParams.get('limit') || '1000');
+    // If no limit parameter, get ALL transactions (unlimited)
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam) : null;
     const offset = parseInt(searchParams.get('offset') || '0');
     const search = searchParams.get('search');
     const category = searchParams.get('category');
@@ -211,7 +213,12 @@ export async function GET(request: NextRequest) {
       query = query.orderBy(desc(orderByColumn));
     }
 
-    const results = await query.limit(limit).offset(offset);
+    // Only apply limit/offset if limit is specified
+    if (limit !== null) {
+      query = query.limit(limit).offset(offset);
+    }
+
+    const results = await query;
 
     return NextResponse.json(results, { status: 200 });
   } catch (error) {
