@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileDown, Pencil, Trash2, Plus, Search, Upload } from "lucide-react";
+import { Download, FileDown, Pencil, Trash2, Plus, Search, Upload, FileText, Eye, X, Check } from "lucide-react";
 import { Pie, PieChart, Line, LineChart, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +26,18 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const invoiceInputRef = useRef<HTMLInputElement>(null);
   const [notifiedExpiries, setNotifiedExpiries] = useState<Set<number>>(new Set());
+  
+  // Upload invoice states
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadingExpenseId, setUploadingExpenseId] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Detail dialog states
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<any>(null);
   
   // Filter states
   const [periodFilter, setPeriodFilter] = useState("all");
@@ -54,21 +65,18 @@ export default function Dashboard() {
   // Clear irrelevant fields when category changes
   useEffect(() => {
     if (formData.category === "Hardware") {
-      // Clear license fields when switching to Hardware
       setFormData(prev => ({
         ...prev,
         licenseType: "",
         expiredSubscription: ""
       }));
     } else if (formData.category === "Software" || formData.category === "Website") {
-      // Clear warranty fields when switching to Software/Website
       setFormData(prev => ({
         ...prev,
         warranty: "",
         expiredWarranty: ""
       }));
     } else {
-      // Clear all optional fields for other categories
       setFormData(prev => ({
         ...prev,
         warranty: "",
@@ -93,7 +101,6 @@ export default function Dashboard() {
     const expiringItems: string[] = [];
 
     expenses.forEach((expense) => {
-      // Check warranty expiry
       if (expense.expiredWarranty && !notifiedExpiries.has(expense.id)) {
         const expiryDate = new Date(expense.expiredWarranty);
         if (expiryDate <= threeWeeksFromNow && expiryDate >= new Date()) {
@@ -109,7 +116,6 @@ export default function Dashboard() {
         }
       }
 
-      // Check license expiry
       if (expense.expiredSubscription && !notifiedExpiries.has(expense.id + 1000000)) {
         const expiryDate = new Date(expense.expiredSubscription);
         if (expiryDate <= threeWeeksFromNow && expiryDate >= new Date()) {
@@ -127,7 +133,6 @@ export default function Dashboard() {
       }
     });
 
-    // Send notifications if there are expiring items
     if (expiringItems.length > 0) {
       const message = `🚨 <b>PERINGATAN EXPIRED MAMAGREEN IT</b> 🚨\n\n` +
         expiringItems.join('\n---\n') +
@@ -145,7 +150,6 @@ export default function Dashboard() {
     }
   };
 
-  // Check if date is expiring within 3 weeks
   const isExpiringSoon = (dateString: string | null): boolean => {
     if (!dateString) return false;
     
@@ -184,7 +188,6 @@ export default function Dashboard() {
     }
   };
 
-  // Helper functions - MUST be defined before use
   const formatDate = (isoDate: string) => {
     return new Date(isoDate).toLocaleDateString('id-ID', {
       day: '2-digit',
@@ -199,26 +202,19 @@ export default function Dashboard() {
     return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
   };
 
-  // Parse date from Excel format (DD/MM/YYYY or other formats)
   const parseExcelDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
     
-    // If it's a number, it's likely an Excel serial date
     if (typeof dateValue === 'number') {
-      // Excel serial date to JS Date
-      // Excel dates are days since 1900-01-01 (with leap year bug)
-      const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // Dec 30, 1899 UTC
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
       const jsDate = new Date(excelEpoch.getTime() + dateValue * 86400000);
       
       if (!isNaN(jsDate.getTime())) {
-        // Return ISO string in UTC to avoid timezone shift
         return jsDate.toISOString();
       }
     }
     
-    // If it's already a Date object
     if (dateValue instanceof Date) {
-      // Use UTC to avoid timezone shift
       const utcDate = new Date(Date.UTC(
         dateValue.getFullYear(),
         dateValue.getMonth(),
@@ -227,12 +223,10 @@ export default function Dashboard() {
       return utcDate.toISOString();
     }
     
-    // If it's a string in DD/MM/YYYY format
     if (typeof dateValue === 'string') {
       const parts = dateValue.split('/');
       if (parts.length === 3) {
         const [day, month, year] = parts;
-        // Use UTC to avoid timezone shift
         const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
         if (!isNaN(date.getTime())) {
           return date.toISOString();
@@ -240,10 +234,8 @@ export default function Dashboard() {
       }
     }
     
-    // Try parsing as general date string with UTC
     const parsedDate = new Date(dateValue);
     if (!isNaN(parsedDate.getTime())) {
-      // Convert to UTC date at midnight to avoid timezone shift
       const utcDate = new Date(Date.UTC(
         parsedDate.getFullYear(),
         parsedDate.getMonth(),
@@ -255,7 +247,6 @@ export default function Dashboard() {
     return null;
   };
 
-  // Handle XLSX import
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -286,19 +277,16 @@ export default function Dashboard() {
         const row: any = jsonData[i];
         
         try {
-          // Skip empty rows - check if essential fields are missing
           if (!row['Tanggal'] || !row['Kategori'] || !row['Deskripsi'] || !row['Vendor']) {
             console.log(`Baris ${i + 2}: Baris kosong, dilewati`);
             continue;
           }
 
-          // Helper function to clean empty values
           const cleanValue = (value: any): string | null => {
             if (!value || value === '-' || value === '' || value === 'null') return null;
             return String(value).trim();
           };
 
-          // Parse dates
           const parsedDate = parseExcelDate(row['Tanggal']);
           if (!parsedDate) {
             errors.push(`Baris ${i + 2}: Tanggal tidak valid (${row['Tanggal']})`);
@@ -306,7 +294,6 @@ export default function Dashboard() {
             continue;
           }
 
-          // Map Excel columns to API fields
           const expenseData: any = {
             date: parsedDate,
             category: String(row['Kategori']).trim(),
@@ -317,7 +304,6 @@ export default function Dashboard() {
             status: cleanValue(row['Status']) || 'pending',
           };
 
-          // Only include warranty fields for Hardware category
           if (expenseData.category === "Hardware") {
             const warrantyValue = cleanValue(row['Status Garansi']);
             const expiredWarrantyValue = cleanValue(row['Expired Garansi']);
@@ -333,7 +319,6 @@ export default function Dashboard() {
             }
           }
 
-          // Only include license fields for Software/Website categories
           if (expenseData.category === "Software" || expenseData.category === "Website") {
             const licenseTypeValue = cleanValue(row['Jenis Lisensi']);
             const expiredLicenseValue = cleanValue(row['Expired Lisensi']);
@@ -349,7 +334,6 @@ export default function Dashboard() {
             }
           }
 
-          // Validate required fields
           if (!expenseData.date || !expenseData.category || !expenseData.description || 
               !expenseData.vendor || !expenseData.amount || expenseData.amount <= 0) {
             errors.push(`Baris ${i + 2}: Data tidak lengkap atau tidak valid`);
@@ -357,9 +341,6 @@ export default function Dashboard() {
             continue;
           }
 
-          console.log(`Baris ${i + 2}: Mengirim data`, expenseData);
-
-          // Send to API
           const response = await fetch('/api/expenses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -367,25 +348,18 @@ export default function Dashboard() {
           });
 
           if (response.ok) {
-            const result = await response.json();
-            console.log(`Baris ${i + 2}: Berhasil disimpan`, result);
             successCount++;
           } else {
             const error = await response.json();
-            console.error(`Baris ${i + 2}: Error response`, error);
             errors.push(`Baris ${i + 2}: ${error.error || 'Gagal menyimpan'}`);
             errorCount++;
           }
         } catch (err: any) {
-          console.error(`Baris ${i + 2}: Exception`, err);
           errors.push(`Baris ${i + 2}: ${err.message}`);
           errorCount++;
         }
       }
 
-      console.log(`Import selesai: ${successCount} berhasil, ${errorCount} gagal`);
-
-      // Refresh data from server
       await fetchExpenses();
       
       if (successCount > 0 && errorCount === 0) {
@@ -408,21 +382,17 @@ export default function Dashboard() {
     }
   };
 
-  // Filter expenses based on period, category, and search
   const filteredExpenses = expenses.filter((expense) => {
-    // Period filter
     if (periodFilter !== "all") {
       const expenseDate = new Date(expense.date);
       const expenseMonth = `${expenseDate.getFullYear()}-${String(expenseDate.getMonth() + 1).padStart(2, '0')}`;
       if (expenseMonth !== periodFilter) return false;
     }
 
-    // Category filter
     if (categoryFilter !== "all" && expense.category !== categoryFilter) {
       return false;
     }
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
@@ -437,7 +407,6 @@ export default function Dashboard() {
     return true;
   });
 
-  // Get unique months from expenses for period filter
   const availableMonths = Array.from(
     new Set(
       expenses.map((exp) => {
@@ -447,10 +416,8 @@ export default function Dashboard() {
     )
   ).sort().reverse();
 
-  // Get unique categories
   const categories = ["Hardware", "Software", "Website", "Services", "Infrastructure", "Accessories & Office Supply"];
 
-  // Export to Excel
   const handleExportExcel = () => {
     const exportData = filteredExpenses.map((expense) => ({
       Tanggal: formatDate(expense.date),
@@ -464,6 +431,7 @@ export default function Dashboard() {
       'Jenis Lisensi': expense.licenseType || '-',
       'Expired Lisensi': expense.expiredSubscription ? formatDate(expense.expiredSubscription) : '-',
       Status: expense.status,
+      'Bukti Transaksi': expense.invoiceUrl ? 'Ada' : 'Tidak Ada',
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -523,22 +491,17 @@ export default function Dashboard() {
         poNumber: formData.poNumber,
       };
 
-      // Only include relevant fields based on category
-      // Send null explicitly for irrelevant fields to clear them in database
       if (formData.category === "Hardware") {
         payload.warranty = formData.warranty || null;
         payload.expiredWarranty = formData.expiredWarranty ? new Date(formData.expiredWarranty).toISOString() : null;
-        // Clear license fields
         payload.licenseType = null;
         payload.expiredSubscription = null;
       } else if (formData.category === "Software" || formData.category === "Website") {
         payload.licenseType = formData.licenseType || null;
         payload.expiredSubscription = formData.expiredSubscription ? new Date(formData.expiredSubscription).toISOString() : null;
-        // Clear warranty fields
         payload.warranty = null;
         payload.expiredWarranty = null;
       } else {
-        // For other categories, clear all optional fields
         payload.warranty = null;
         payload.expiredWarranty = null;
         payload.licenseType = null;
@@ -601,6 +564,14 @@ export default function Dashboard() {
   };
 
   const handleStatusChange = async (id: number, newStatus: string) => {
+    // If changing to approved, show upload dialog
+    if (newStatus === 'approved') {
+      setUploadingExpenseId(id);
+      setIsUploadDialogOpen(true);
+      return;
+    }
+
+    // For other status changes, update directly
     try {
       const response = await fetch(`/api/expenses?id=${id}`, {
         method: 'PUT',
@@ -617,10 +588,101 @@ export default function Dashboard() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 5MB");
+        return;
+      }
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Hanya file gambar (JPG, PNG, GIF, WEBP) atau PDF yang diizinkan");
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUploadInvoice = async () => {
+    if (!selectedFile || !uploadingExpenseId) {
+      toast.error("Pilih file terlebih dahulu");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('expenseId', uploadingExpenseId.toString());
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/expenses/upload-invoice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload invoice');
+      }
+
+      // Update status to approved
+      const statusResponse = await fetch(`/api/expenses?id=${uploadingExpenseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      });
+
+      if (!statusResponse.ok) throw new Error('Failed to update status');
+
+      await fetchExpenses();
+      toast.success("Bukti transaksi berhasil diupload dan status disetujui");
+      setIsUploadDialogOpen(false);
+      setSelectedFile(null);
+      setUploadingExpenseId(null);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast.error("Gagal mengupload bukti transaksi: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSkipUpload = async () => {
+    if (!uploadingExpenseId) return;
+
+    try {
+      const response = await fetch(`/api/expenses?id=${uploadingExpenseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'approved' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
+      await fetchExpenses();
+      toast.success("Status berhasil disetujui");
+      setIsUploadDialogOpen(false);
+      setSelectedFile(null);
+      setUploadingExpenseId(null);
+    } catch (err) {
+      console.error('Status update error:', err);
+      toast.error("Gagal mengupdate status");
+    }
+  };
+
+  const handleViewDetail = (expense: any) => {
+    setSelectedExpense(expense);
+    setIsDetailDialogOpen(true);
+  };
+
   // Calculate total spending from filtered data
   const totalSpending = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   
-  // Group by category for pie chart (from filtered data)
+  // Group by category for pie chart
   const categoryData = filteredExpenses.reduce((acc: any, exp) => {
     if (!acc[exp.category]) {
       acc[exp.category] = 0;
@@ -635,7 +697,7 @@ export default function Dashboard() {
     percentage: ((value / totalSpending) * 100).toFixed(0)
   }));
 
-  // Group by month for trend chart (from filtered data)
+  // Group by month for trend chart
   const monthlyData = filteredExpenses.reduce((acc: any, exp) => {
     const date = new Date(exp.date);
     const monthKey = `${date.toLocaleString('id-ID', { month: 'short' })} ${date.getFullYear()}`;
@@ -650,7 +712,7 @@ export default function Dashboard() {
   const trendData = Object.entries(monthlyData)
     .map(([month, amount]: [string, any]) => ({
       month,
-      amount: amount / 1000000 // Convert to millions
+      amount: amount / 1000000
     }))
     .sort((a, b) => {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -827,7 +889,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Transactions Section */}
+      {/* Transactions Section - MODERN CARD VIEW */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -925,11 +987,6 @@ export default function Dashboard() {
                             )}
                           </SelectContent>
                         </Select>
-                        {vendors.length === 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            Tambahkan vendor terlebih dahulu di menu Vendor Tracking
-                          </p>
-                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="category">Kategori</Label>
@@ -1061,90 +1118,286 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <div className="inline-block min-w-full align-middle">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Kategori</TableHead>
-                      <TableHead>Deskripsi</TableHead>
-                      <TableHead>Vendor</TableHead>
-                      <TableHead>No PO</TableHead>
-                      <TableHead className="text-right">Harga</TableHead>
-                      <TableHead>Status Garansi</TableHead>
-                      <TableHead>Expired Garansi</TableHead>
-                      <TableHead>Jenis Lisensi</TableHead>
-                      <TableHead>Expired Lisensi</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-center">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredExpenses.map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell>{formatDate(expense.date)}</TableCell>
-                        <TableCell>{expense.category}</TableCell>
-                        <TableCell>{expense.description}</TableCell>
-                        <TableCell>{expense.vendor}</TableCell>
-                        <TableCell>{expense.poNumber || "-"}</TableCell>
-                        <TableCell className="text-right font-medium">Rp {expense.amount.toLocaleString('id-ID')}</TableCell>
-                        <TableCell>{expense.warranty || "-"}</TableCell>
-                        <TableCell className={isExpiringSoon(expense.expiredWarranty) ? "expiring-soon" : ""}>
-                          {expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}
-                        </TableCell>
-                        <TableCell>{expense.licenseType || "-"}</TableCell>
-                        <TableCell className={isExpiringSoon(expense.expiredSubscription) ? "expiring-soon" : ""}>
-                          {expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Select 
-                            value={expense.status} 
-                            onValueChange={(value) => handleStatusChange(expense.id, value)}
-                          >
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="approved">
-                                <Badge className="bg-green-500">Disetujui</Badge>
-                              </SelectItem>
-                              <SelectItem value="pending">
-                                <Badge className="bg-yellow-500">Pending</Badge>
-                              </SelectItem>
-                              <SelectItem value="rejected">
-                                <Badge className="bg-red-500">Ditolak</Badge>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(expense)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(expense.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+            <div className="space-y-3">
+              {filteredExpenses.map((expense) => (
+                <Card key={expense.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-base mb-1">{expense.description}</h3>
+                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                📅 {formatDate(expense.date)}
+                              </span>
+                              <span>•</span>
+                              <span>🏢 {expense.vendor}</span>
+                              <span>•</span>
+                              <span>📦 {expense.category}</span>
+                            </div>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                          <div className="text-right">
+                            <div className="font-bold text-lg text-green-600">
+                              Rp {expense.amount.toLocaleString('id-ID')}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              PO: {expense.poNumber || "-"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expiry warnings */}
+                        {(expense.expiredWarranty || expense.expiredSubscription) && (
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            {expense.expiredWarranty && (
+                              <span className={`px-2 py-1 rounded-full ${isExpiringSoon(expense.expiredWarranty) ? 'bg-red-100 text-red-700 font-semibold' : 'bg-gray-100 text-gray-700'}`}>
+                                ⚠️ Garansi: {formatDate(expense.expiredWarranty)}
+                              </span>
+                            )}
+                            {expense.expiredSubscription && (
+                              <span className={`px-2 py-1 rounded-full ${isExpiringSoon(expense.expiredSubscription) ? 'bg-red-100 text-red-700 font-semibold' : 'bg-gray-100 text-gray-700'}`}>
+                                🔐 Lisensi: {formatDate(expense.expiredSubscription)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Invoice indicator */}
+                        {expense.invoiceUrl && (
+                          <div className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            <span>Bukti transaksi tersedia</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                        <Select 
+                          value={expense.status} 
+                          onValueChange={(value) => handleStatusChange(expense.id, value)}
+                        >
+                          <SelectTrigger className="w-[130px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="approved">
+                              <Badge className="bg-green-500">Disetujui</Badge>
+                            </SelectItem>
+                            <SelectItem value="pending">
+                              <Badge className="bg-yellow-500">Pending</Badge>
+                            </SelectItem>
+                            <SelectItem value="rejected">
+                              <Badge className="bg-red-500">Ditolak</Badge>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewDetail(expense)}
+                            title="Lihat detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(expense)}
+                            title="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(expense.id)}
+                            title="Hapus"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Upload Invoice Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Bukti Transaksi</DialogTitle>
+            <DialogDescription>
+              Upload invoice atau bukti transaksi untuk persetujuan ini (Opsional)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoice-file">File Invoice/Bukti (Gambar atau PDF, Max 5MB)</Label>
+              <Input
+                ref={invoiceInputRef}
+                id="invoice-file"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileSelect}
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  File dipilih: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSkipUpload}
+                disabled={isUploading}
+              >
+                Lewati
+              </Button>
+              <Button
+                onClick={handleUploadInvoice}
+                disabled={!selectedFile || isUploading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isUploading ? "Mengupload..." : "Upload & Setujui"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detail Transaksi</DialogTitle>
+            <DialogDescription>
+              Informasi lengkap transaksi pengeluaran
+            </DialogDescription>
+          </DialogHeader>
+          {selectedExpense && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Tanggal</Label>
+                  <p className="font-medium">{formatDate(selectedExpense.date)}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <div className="mt-1">
+                    <Badge className={
+                      selectedExpense.status === 'approved' ? 'bg-green-500' :
+                      selectedExpense.status === 'pending' ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }>
+                      {selectedExpense.status === 'approved' ? 'Disetujui' :
+                       selectedExpense.status === 'pending' ? 'Pending' : 'Ditolak'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Vendor</Label>
+                  <p className="font-medium">{selectedExpense.vendor}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Kategori</Label>
+                  <p className="font-medium">{selectedExpense.category}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Deskripsi</Label>
+                <p className="font-medium">{selectedExpense.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">No PO</Label>
+                  <p className="font-medium">{selectedExpense.poNumber || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Jumlah</Label>
+                  <p className="font-bold text-lg text-green-600">
+                    Rp {selectedExpense.amount.toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </div>
+
+              {selectedExpense.category === "Hardware" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Status Garansi</Label>
+                    <p className="font-medium">{selectedExpense.warranty || "-"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Expired Garansi</Label>
+                    <p className={`font-medium ${isExpiringSoon(selectedExpense.expiredWarranty) ? 'text-red-600 font-bold' : ''}`}>
+                      {selectedExpense.expiredWarranty ? formatDate(selectedExpense.expiredWarranty) : "-"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedExpense.category === "Software" || selectedExpense.category === "Website") && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Jenis Lisensi</Label>
+                    <p className="font-medium">{selectedExpense.licenseType || "-"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Expired Lisensi</Label>
+                    <p className={`font-medium ${isExpiringSoon(selectedExpense.expiredSubscription) ? 'text-red-600 font-bold' : ''}`}>
+                      {selectedExpense.expiredSubscription ? formatDate(selectedExpense.expiredSubscription) : "-"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedExpense.invoiceUrl && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Bukti Transaksi</Label>
+                  <div className="mt-2">
+                    {selectedExpense.invoiceUrl.toLowerCase().endsWith('.pdf') ? (
+                      <a
+                        href={selectedExpense.invoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                      >
+                        <FileText className="h-5 w-5" />
+                        <span>Lihat Invoice (PDF)</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={selectedExpense.invoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={selectedExpense.invoiceUrl}
+                          alt="Invoice"
+                          className="max-w-full h-auto rounded-lg border"
+                        />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
