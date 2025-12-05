@@ -1367,32 +1367,47 @@ export default function Dashboard() {
               {selectedExpense.invoiceData && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Bukti Transaksi</Label>
-                  <div className="mt-2">
+                  <div className="mt-2 space-y-3">
                     {selectedExpense.invoiceMimeType === 'application/pdf' ? (
-                      <a
-                        href={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
-                        download={selectedExpense.invoiceFilename || 'invoice.pdf'}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
-                      >
-                        <FileText className="h-5 w-5" />
-                        <span>Download Invoice (PDF)</span>
-                      </a>
+                      <>
+                        {/* PDF Preview */}
+                        <div className="border rounded-lg overflow-hidden bg-gray-50">
+                          <iframe
+                            src={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
+                            className="w-full h-[500px]"
+                            title="PDF Preview"
+                          />
+                        </div>
+                        {/* Download Button */}
+                        <a
+                          href={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
+                          download={selectedExpense.invoiceFilename || 'invoice.pdf'}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>Download PDF</span>
+                        </a>
+                      </>
                     ) : (
-                      <div>
-                        <img
-                          src={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
-                          alt="Invoice"
-                          className="max-w-full h-auto rounded-lg border"
-                        />
+                      <>
+                        {/* Image Preview */}
+                        <div className="border rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
+                            alt="Invoice"
+                            className="max-w-full h-auto rounded-lg"
+                          />
+                        </div>
+                        {/* Download Button */}
                         <a
                           href={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
                           download={selectedExpense.invoiceFilename || 'invoice.jpg'}
-                          className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
                         >
                           <Download className="h-4 w-4" />
-                          <span>Download Invoice</span>
+                          <span>Download Gambar</span>
                         </a>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
