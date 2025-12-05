@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(expense[0], { status: 200 });
     }
 
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const limit = parseInt(searchParams.get('limit') || '1000');
     const offset = parseInt(searchParams.get('offset') || '0');
     const search = searchParams.get('search');
     const category = searchParams.get('category');
