@@ -431,7 +431,7 @@ export default function Dashboard() {
       'Jenis Lisensi': expense.licenseType || '-',
       'Expired Lisensi': expense.expiredSubscription ? formatDate(expense.expiredSubscription) : '-',
       Status: expense.status,
-      'Bukti Transaksi': expense.invoiceUrl ? 'Ada' : 'Tidak Ada',
+      'Bukti Transaksi': expense.invoiceData ? 'Ada' : 'Tidak Ada',
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -1164,7 +1164,7 @@ export default function Dashboard() {
                         )}
 
                         {/* Invoice indicator */}
-                        {expense.invoiceUrl && (
+                        {expense.invoiceData && (
                           <div className="text-xs text-emerald-600 font-medium flex items-center gap-1">
                             <FileText className="h-3 w-3" />
                             <span>Bukti transaksi tersedia</span>
@@ -1364,32 +1364,35 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {selectedExpense.invoiceUrl && (
+              {selectedExpense.invoiceData && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Bukti Transaksi</Label>
                   <div className="mt-2">
-                    {selectedExpense.invoiceUrl.toLowerCase().endsWith('.pdf') ? (
+                    {selectedExpense.invoiceMimeType === 'application/pdf' ? (
                       <a
-                        href={selectedExpense.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
+                        download={selectedExpense.invoiceFilename || 'invoice.pdf'}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
                       >
                         <FileText className="h-5 w-5" />
-                        <span>Lihat Invoice (PDF)</span>
+                        <span>Download Invoice (PDF)</span>
                       </a>
                     ) : (
-                      <a
-                        href={selectedExpense.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <div>
                         <img
-                          src={selectedExpense.invoiceUrl}
+                          src={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
                           alt="Invoice"
                           className="max-w-full h-auto rounded-lg border"
                         />
-                      </a>
+                        <a
+                          href={`data:${selectedExpense.invoiceMimeType};base64,${selectedExpense.invoiceData}`}
+                          download={selectedExpense.invoiceFilename || 'invoice.jpg'}
+                          className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>Download Invoice</span>
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
