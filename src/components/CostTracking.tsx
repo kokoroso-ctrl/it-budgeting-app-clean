@@ -205,39 +205,39 @@ export default function CostTracking() {
   const uniqueCategories = Array.from(new Set(vendors.map(v => v.category)));
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Vendor Tracking</h2>
-          <p className="text-muted-foreground">Kelola dan pantau vendor</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Tracking</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Kelola dan pantau vendor</p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
+        <div className="bg-destructive/10 border border-destructive text-destructive px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
           {error}
         </div>
       )}
 
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
+        <CardHeader className="pb-3 sm:pb-4">
+          <div className="flex flex-col gap-3">
             <div>
-              <CardTitle>Daftar Vendor</CardTitle>
-              <CardDescription>Total pengeluaran dihitung otomatis dari akumulasi transaksi</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Daftar Vendor</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Total pengeluaran dihitung otomatis dari akumulasi transaksi</CardDescription>
             </div>
-            <div className="flex space-x-2">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari vendor atau kategori..."
+                  placeholder="Cari vendor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-[250px]"
+                  className="pl-9 text-sm"
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Semua Kategori" />
                 </SelectTrigger>
@@ -251,22 +251,22 @@ export default function CostTracking() {
                 </SelectContent>
               </Select>
               {(searchTerm || categoryFilter !== "all") && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
                   <X className="h-4 w-4 mr-1" />
                   Clear
                 </Button>
               )}
               <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogTrigger asChild>
-                  <Button className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
-                    Tambah Vendor
+                    Tambah
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto mx-4">
                   <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Edit Vendor" : "Tambah Vendor Baru"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-lg sm:text-xl">{isEditMode ? "Edit Vendor" : "Tambah Vendor Baru"}</DialogTitle>
+                    <DialogDescription className="text-xs sm:text-sm">
                       {isEditMode ? "Update informasi vendor" : "Tambahkan vendor baru ke sistem. Total pengeluaran akan dihitung otomatis dari transaksi."}
                     </DialogDescription>
                   </DialogHeader>
@@ -324,12 +324,12 @@ export default function CostTracking() {
                       </Select>
                     </div>
 
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting}>
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSubmitting} className="w-full sm:w-auto">
                         Batal
                       </Button>
-                      <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
-                        {isSubmitting ? "Menyimpan..." : (isEditMode ? "Update Vendor" : "Tambah Vendor")}
+                      <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+                        {isSubmitting ? "Menyimpan..." : (isEditMode ? "Update" : "Tambah")}
                       </Button>
                     </div>
                   </form>
@@ -341,81 +341,87 @@ export default function CostTracking() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Memuat vendor...</div>
+              <div className="text-sm text-muted-foreground">Memuat vendor...</div>
             </div>
           ) : filteredVendors.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {vendors.length === 0 ? "Tidak ada vendor ditemukan" : "Tidak ada hasil yang cocok dengan filter"}
               </div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Vendor</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead className="text-right">Total Pengeluaran</TableHead>
-                  <TableHead className="text-center">Kontrak Aktif</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVendors.map((vendor) => (
-                  <TableRow key={vendor.id}>
-                    <TableCell className="font-medium">{vendor.name}</TableCell>
-                    <TableCell>{vendor.category}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      Rp {vendor.totalSpent.toLocaleString('id-ID')}
-                    </TableCell>
-                    <TableCell className="text-center">{vendor.contracts}</TableCell>
-                    <TableCell>
-                      <Select 
-                        value={vendor.status} 
-                        onValueChange={(value) => handleStatusChange(vendor.id, value)}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">
-                            <span className="flex items-center">
-                              <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                              Aktif
-                            </span>
-                          </SelectItem>
-                          <SelectItem value="inactive">
-                            <span className="flex items-center">
-                              <span className="w-2 h-2 rounded-full bg-gray-500 mr-2"></span>
-                              Tidak Aktif
-                            </span>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(vendor)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(vendor.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Nama Vendor</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Kategori</TableHead>
+                      <TableHead className="text-right text-xs sm:text-sm">Total Pengeluaran</TableHead>
+                      <TableHead className="text-center text-xs sm:text-sm">Kontrak</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-center text-xs sm:text-sm">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVendors.map((vendor) => (
+                      <TableRow key={vendor.id}>
+                        <TableCell className="font-medium text-xs sm:text-sm">{vendor.name}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">{vendor.category}</TableCell>
+                        <TableCell className="text-right font-medium text-xs sm:text-sm">
+                          Rp {vendor.totalSpent.toLocaleString('id-ID')}
+                        </TableCell>
+                        <TableCell className="text-center text-xs sm:text-sm">{vendor.contracts}</TableCell>
+                        <TableCell>
+                          <Select 
+                            value={vendor.status} 
+                            onValueChange={(value) => handleStatusChange(vendor.id, value)}
+                          >
+                            <SelectTrigger className="w-[100px] sm:w-[140px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">
+                                <span className="flex items-center text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                  Aktif
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="inactive">
+                                <span className="flex items-center text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-gray-500 mr-2"></span>
+                                  Tidak Aktif
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1 sm:gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(vendor)}
+                              className="h-8 w-8"
+                            >
+                              <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(vendor.id)}
+                              className="h-8 w-8"
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
