@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { expenses } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import fs from 'fs';
-import path from 'path';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -76,41 +74,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create invoices directory if it doesn't exist
-    const invoicesDir = path.join(process.cwd(), 'public', 'invoices');
-    if (!fs.existsSync(invoicesDir)) {
-      fs.mkdirSync(invoicesDir, { recursive: true });
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = `invoice-${parsedExpenseId}-${timestamp}-${sanitizedOriginalName}`;
-    const filePath = path.join(invoicesDir, filename);
-
-    // Convert file to buffer and save
+    // Convert file to base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    fs.writeFileSync(filePath, buffer);
+    const base64Data = buffer.toString('base64');
 
-    // Generate URL path
-    const invoiceUrl = `/invoices/${filename}`;
-
-    // Update expense record
+    // Update expense record with base64 data
     const updatedExpense = await db
       .update(expenses)
       .set({
-        invoiceUrl,
+        invoiceData: base64Data,
+        invoiceMimeType: file.type,
+        invoiceFilename: file.name,
         updatedAt: new Date().toISOString()
       })
       .where(eq(expenses.id, parsedExpenseId))
       .returning();
 
     if (updatedExpense.length === 0) {
-      // Clean up uploaded file if database update fails
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
       return NextResponse.json(
         { error: 'Failed to update expense', code: 'UPDATE_FAILED' },
         { status: 500 }
@@ -120,7 +101,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        invoiceUrl,
+        filename: file.name,
+        mimeType: file.type,
+        size: file.size,
         expense: updatedExpense[0]
       },
       { status: 200 }
