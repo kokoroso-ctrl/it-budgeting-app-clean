@@ -73,7 +73,7 @@ startxref
     
     // Create a Blob from the base64 data
     const blob = await (await fetch(base64DataUri)).blob();
-    formData.append('invoice', blob, 'test-invoice.pdf');
+    formData.append('file', blob, 'test-invoice.pdf');
 
     // Get the base URL from the request
     const baseUrl = request.nextUrl.origin;
