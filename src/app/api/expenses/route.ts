@@ -256,6 +256,9 @@ export async function POST(request: NextRequest) {
       expiredWarranty: cleanedData.expiredWarranty || null,
       licenseType: cleanedData.licenseType || null,
       expiredSubscription: cleanedData.expiredSubscription || null,
+      invoiceData: null,
+      invoiceMimeType: null,
+      invoiceFilename: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

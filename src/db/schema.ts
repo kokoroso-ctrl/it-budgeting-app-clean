@@ -13,7 +13,9 @@ export const expenses = sqliteTable('expenses', {
   expiredWarranty: text('expired_warranty'),
   licenseType: text('license_type'),
   expiredSubscription: text('expired_subscription'),
-  invoiceUrl: text('invoice_url'),
+  invoiceData: text('invoice_data'),
+  invoiceMimeType: text('invoice_mime_type'),
+  invoiceFilename: text('invoice_filename'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
