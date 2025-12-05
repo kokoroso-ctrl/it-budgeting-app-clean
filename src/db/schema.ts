@@ -13,6 +13,7 @@ export const expenses = sqliteTable('expenses', {
   expiredWarranty: text('expired_warranty'),
   licenseType: text('license_type'),
   expiredSubscription: text('expired_subscription'),
+  invoiceUrl: text('invoice_url'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
