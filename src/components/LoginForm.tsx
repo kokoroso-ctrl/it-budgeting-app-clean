@@ -48,7 +48,7 @@ export default function LoginForm() {
             <img 
               src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/logommg-1764895004570.png?width=8000&height=8000&resize=contain"
               alt="MAMAGREEN Logo"
-              className="h-24 w-auto object-contain rounded-xl shadow-lg shadow-emerald-500/30"
+              className="h-24 w-auto object-contain rounded-xl shadow-[0_0_25px_rgba(16,185,129,0.4)]"
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
