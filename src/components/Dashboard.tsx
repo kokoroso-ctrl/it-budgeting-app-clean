@@ -670,7 +670,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes blink-red {
           0%, 100% { 
@@ -687,17 +687,17 @@ export default function Dashboard() {
         }
       `}} />
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transaksi Pengeluaran</h2>
-          <p className="text-muted-foreground">Monitor dan kelola semua pengeluaran IT</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Transaksi Pengeluaran</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Monitor dan kelola semua pengeluaran IT</p>
         </div>
       </div>
 
       {/* Filters Section */}
       <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="period-filter" className="text-sm font-medium">Periode</Label>
               <Select value={periodFilter} onValueChange={setPeriodFilter}>
@@ -736,43 +736,43 @@ export default function Dashboard() {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
         <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Pengeluaran</CardDescription>
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-xs sm:text-sm">Total Pengeluaran</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-xl sm:text-3xl font-bold">
               Rp {totalSpending.toLocaleString('id-ID')}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Jumlah Transaksi</CardDescription>
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardDescription className="text-xs sm:text-sm">Jumlah Transaksi</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{filteredExpenses.length}</div>
+            <div className="text-xl sm:text-3xl font-bold">{filteredExpenses.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Pengeluaran per Kategori</CardTitle>
-            <CardDescription>Distribusi pengeluaran berdasarkan kategori</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Pengeluaran per Kategori</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Distribusi pengeluaran berdasarkan kategori</CardDescription>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">Belum ada data</p>
+              <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
+                <p className="text-sm text-muted-foreground">Belum ada data</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -780,7 +780,7 @@ export default function Dashboard() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percentage }) => `${name}: ${percentage}%`}
-                    outerRadius={100}
+                    outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -798,20 +798,20 @@ export default function Dashboard() {
         {/* Line Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Trend Pengeluaran</CardTitle>
-            <CardDescription>Perkembangan pengeluaran per bulan</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Trend Pengeluaran</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Perkembangan pengeluaran per bulan</CardDescription>
           </CardHeader>
           <CardContent>
             {trendData.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">Belum ada data</p>
+              <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
+                <p className="text-sm text-muted-foreground">Belum ada data</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis label={{ value: 'Juta (Rp)', angle: -90, position: 'insideLeft' }} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis label={{ value: 'Juta (Rp)', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(value: any) => `${value.toFixed(1)}M`} />
                   <Line 
                     type="monotone" 
@@ -830,12 +830,12 @@ export default function Dashboard() {
       {/* Transactions Section */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
-              <CardTitle>Daftar Transaksi</CardTitle>
-              <CardDescription>Riwayat transaksi pengeluaran</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Daftar Transaksi</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Riwayat transaksi pengeluaran</CardDescription>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -847,27 +847,29 @@ export default function Dashboard() {
                 variant="outline" 
                 onClick={handleImportClick}
                 disabled={isImporting}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                size="sm"
+                className="border-blue-600 text-blue-600 hover:bg-blue-50 flex-1 sm:flex-none"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                {isImporting ? "Importing..." : "Import XLSX"}
+                {isImporting ? "Importing..." : "Import"}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={handleExportExcel}
-                className="border-green-600 text-green-600 hover:bg-green-50"
+                size="sm"
+                className="border-green-600 text-green-600 hover:bg-green-50 flex-1 sm:flex-none"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export XLSX
+                Export
               </Button>
               <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <DialogTrigger asChild>
-                  <Button className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none">
                     <Plus className="mr-2 h-4 w-4" />
-                    Tambah Transaksi
+                    Tambah
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                   <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit Transaksi" : "Tambah Transaksi Baru"}</DialogTitle>
                     <DialogDescription>
@@ -1042,101 +1044,103 @@ export default function Dashboard() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Cari berdasarkan tanggal, kategori, deskripsi, vendor, atau PO..."
+                placeholder="Cari transaksi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
           </div>
 
           {filteredExpenses.length === 0 ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {searchQuery || periodFilter !== "all" || categoryFilter !== "all" 
                   ? "Tidak ada transaksi yang sesuai dengan filter" 
                   : "Belum ada transaksi"}
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>No PO</TableHead>
-                    <TableHead className="text-right">Harga</TableHead>
-                    <TableHead>Status Garansi</TableHead>
-                    <TableHead>Expired Garansi</TableHead>
-                    <TableHead>Jenis Lisensi</TableHead>
-                    <TableHead>Expired Lisensi</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-center">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredExpenses.map((expense) => (
-                    <TableRow key={expense.id}>
-                      <TableCell>{formatDate(expense.date)}</TableCell>
-                      <TableCell>{expense.category}</TableCell>
-                      <TableCell>{expense.description}</TableCell>
-                      <TableCell>{expense.vendor}</TableCell>
-                      <TableCell>{expense.poNumber || "-"}</TableCell>
-                      <TableCell className="text-right font-medium">Rp {expense.amount.toLocaleString('id-ID')}</TableCell>
-                      <TableCell>{expense.warranty || "-"}</TableCell>
-                      <TableCell className={isExpiringSoon(expense.expiredWarranty) ? "expiring-soon" : ""}>
-                        {expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}
-                      </TableCell>
-                      <TableCell>{expense.licenseType || "-"}</TableCell>
-                      <TableCell className={isExpiringSoon(expense.expiredSubscription) ? "expiring-soon" : ""}>
-                        {expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Select 
-                          value={expense.status} 
-                          onValueChange={(value) => handleStatusChange(expense.id, value)}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="approved">
-                              <Badge className="bg-green-500">Disetujui</Badge>
-                            </SelectItem>
-                            <SelectItem value="pending">
-                              <Badge className="bg-yellow-500">Pending</Badge>
-                            </SelectItem>
-                            <SelectItem value="rejected">
-                              <Badge className="bg-red-500">Ditolak</Badge>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(expense)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(expense.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Deskripsi</TableHead>
+                      <TableHead>Vendor</TableHead>
+                      <TableHead>No PO</TableHead>
+                      <TableHead className="text-right">Harga</TableHead>
+                      <TableHead>Status Garansi</TableHead>
+                      <TableHead>Expired Garansi</TableHead>
+                      <TableHead>Jenis Lisensi</TableHead>
+                      <TableHead>Expired Lisensi</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-center">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredExpenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>{formatDate(expense.date)}</TableCell>
+                        <TableCell>{expense.category}</TableCell>
+                        <TableCell>{expense.description}</TableCell>
+                        <TableCell>{expense.vendor}</TableCell>
+                        <TableCell>{expense.poNumber || "-"}</TableCell>
+                        <TableCell className="text-right font-medium">Rp {expense.amount.toLocaleString('id-ID')}</TableCell>
+                        <TableCell>{expense.warranty || "-"}</TableCell>
+                        <TableCell className={isExpiringSoon(expense.expiredWarranty) ? "expiring-soon" : ""}>
+                          {expense.expiredWarranty ? formatDate(expense.expiredWarranty) : "-"}
+                        </TableCell>
+                        <TableCell>{expense.licenseType || "-"}</TableCell>
+                        <TableCell className={isExpiringSoon(expense.expiredSubscription) ? "expiring-soon" : ""}>
+                          {expense.expiredSubscription ? formatDate(expense.expiredSubscription) : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Select 
+                            value={expense.status} 
+                            onValueChange={(value) => handleStatusChange(expense.id, value)}
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="approved">
+                                <Badge className="bg-green-500">Disetujui</Badge>
+                              </SelectItem>
+                              <SelectItem value="pending">
+                                <Badge className="bg-yellow-500">Pending</Badge>
+                              </SelectItem>
+                              <SelectItem value="rejected">
+                                <Badge className="bg-red-500">Ditolak</Badge>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(expense)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(expense.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
