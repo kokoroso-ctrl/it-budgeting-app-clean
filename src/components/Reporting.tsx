@@ -222,7 +222,7 @@ export default function Reporting() {
   const categories = Array.from(new Set(expenses.map((exp) => exp.category)));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Print Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
@@ -245,29 +245,29 @@ export default function Reporting() {
         }
       `}} />
 
-      <div className="flex justify-between items-center print:hidden">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 print:hidden">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Laporan & Analitik</h2>
-          <p className="text-muted-foreground">Laporan pengeluaran dan analisis anggaran periode {selectedYear}</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Laporan & Analitik</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Laporan pengeluaran dan analisis anggaran periode {selectedYear}</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground">Memuat data...</div>
+          <div className="text-sm text-muted-foreground">Memuat data...</div>
         </div>
       ) : (
         <>
           {/* Expense Report Section */}
           <Card className="print:hidden">
-            <CardHeader>
-              <CardTitle>Laporan Pengeluaran</CardTitle>
-              <CardDescription>Filter dan cetak laporan pengeluaran</CardDescription>
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Laporan Pengeluaran</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Filter dan cetak laporan pengeluaran</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Filter Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -279,7 +279,7 @@ export default function Reporting() {
 
                 {filterType === "month" && (
                   <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Pilih Bulan" />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,7 +294,7 @@ export default function Reporting() {
 
                 {filterType === "category" && (
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>
                     <SelectContent>
@@ -307,23 +307,23 @@ export default function Reporting() {
                   </Select>
                 )}
 
-                <Button onClick={handlePrint} className="w-full">
+                <Button onClick={handlePrint} className="w-full" size="sm">
                   <Printer className="mr-2 h-4 w-4" />
                   Print / Save PDF
                 </Button>
               </div>
 
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs sm:text-sm text-muted-foreground">
                 Total Records: {filteredExpenses.length} | Total Amount: Rp {calculateTotal().toLocaleString("id-ID")}
               </div>
 
               {/* Category Summary */}
               {filteredExpenses.length > 0 && (
-                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-sm mb-3">Ringkasan Total Pengeluaran per Kategori</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="mt-4 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="font-semibold text-xs sm:text-sm mb-3">Ringkasan Total Pengeluaran per Kategori</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                     {calculateCategorySummary().map(({ category, total }) => (
-                      <div key={category} className="flex justify-between items-center text-sm">
+                      <div key={category} className="flex justify-between items-center text-xs sm:text-sm">
                         <span className="text-muted-foreground">{category}:</span>
                         <span className="font-semibold">Rp {total.toLocaleString("id-ID")}</span>
                       </div>
@@ -341,9 +341,9 @@ export default function Reporting() {
               <div className="border-b-2 border-gray-800 pb-3">
                 <div className="flex items-center gap-4">
                   <img 
-                    src="https://mamagreen.com/wp-content/uploads/2024/10/MAMAGREEN-PRIMARY-LOGO-100px.jpg" 
+                    src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/logommg-1764895004570.png?width=8000&height=8000&resize=contain"
                     alt="Mamagreen Logo" 
-                    className="h-12"
+                    className="h-12 w-auto object-contain"
                   />
                   <div>
                     <h1 className="text-xl font-bold">PT MAMAGREEN PACIFIC</h1>
@@ -440,17 +440,17 @@ export default function Reporting() {
           </div>
 
           {/* Analytics Sections */}
-          <div className="print:hidden">
+          <div className="print:hidden space-y-4 sm:space-y-6">
             {/* Year Filter for Analytics */}
             <Card>
-              <CardHeader>
-                <CardTitle>Filter Analitik</CardTitle>
-                <CardDescription>Pilih tahun untuk analisis anggaran</CardDescription>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg">Filter Analitik</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Pilih tahun untuk analisis anggaran</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="w-full md:w-64">
+                <div className="w-full sm:w-64">
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Pilih Tahun" />
                     </SelectTrigger>
                     <SelectContent>
@@ -465,21 +465,21 @@ export default function Reporting() {
 
             {/* Alerts Section */}
             {alerts.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {alerts.map((alert) => (
                   <Card key={alert.id}>
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2 sm:pb-3">
                       <div className="flex items-center space-x-2">
-                        {alert.severity === "high" && <AlertTriangle className="h-5 w-5 text-red-500" />}
-                        {alert.severity === "medium" && <TrendingUp className="h-5 w-5 text-yellow-500" />}
-                        {alert.severity === "low" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                        <Badge variant={alert.severity === "high" ? "destructive" : "secondary"}>
+                        {alert.severity === "high" && <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />}
+                        {alert.severity === "medium" && <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />}
+                        {alert.severity === "low" && <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />}
+                        <Badge variant={alert.severity === "high" ? "destructive" : "secondary"} className="text-xs">
                           {alert.category}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm">{alert.message}</p>
+                      <p className="text-xs sm:text-sm">{alert.message}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -488,35 +488,35 @@ export default function Reporting() {
 
             {/* Forecast Chart */}
             <Card>
-              <CardHeader>
-                <CardTitle>Ramalan Anggaran {selectedYear}</CardTitle>
-                <CardDescription>Pengeluaran aktual vs ramalan</CardDescription>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg">Ramalan Anggaran {selectedYear}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Pengeluaran aktual vs ramalan</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={300} className="sm:h-[350px]">
                   <LineChart data={forecastData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`} tick={{ fontSize: 12 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Line
                       type="monotone"
                       dataKey="actual"
                       stroke="#10b981"
-                      strokeWidth={3}
+                      strokeWidth={2}
                       name="Aktual"
                       connectNulls={false}
-                      dot={{ fill: "#10b981", r: 4 }}
+                      dot={{ fill: "#10b981", r: 3 }}
                     />
                     <Line
                       type="monotone"
                       dataKey="forecast"
                       stroke="#6366f1"
-                      strokeWidth={3}
+                      strokeWidth={2}
                       strokeDasharray="5 5"
                       name="Ramalan"
-                      dot={{ fill: "#6366f1", r: 4 }}
+                      dot={{ fill: "#6366f1", r: 3 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -525,56 +525,60 @@ export default function Reporting() {
 
             {/* Variance Report Table */}
             <Card>
-              <CardHeader>
-                <CardTitle>Laporan Varians Anggaran {selectedYear}</CardTitle>
-                <CardDescription>Rincian detail per kategori</CardDescription>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg">Laporan Varians Anggaran {selectedYear}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Rincian detail per kategori</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kategori</TableHead>
-                      <TableHead className="text-right">Anggaran</TableHead>
-                      <TableHead className="text-right">Aktual</TableHead>
-                      <TableHead className="text-right">Varians</TableHead>
-                      <TableHead className="text-right">Varians %</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {varianceData.map((item) => (
-                      <TableRow key={item.category}>
-                        <TableCell className="font-medium">{item.category}</TableCell>
-                        <TableCell className="text-right">Rp {(item.budget / 1000000).toFixed(0)}Jt</TableCell>
-                        <TableCell className="text-right">Rp {(item.actual / 1000000).toFixed(0)}Jt</TableCell>
-                        <TableCell className={`text-right font-medium ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                          Rp {(Math.abs(item.variance) / 1000000).toFixed(0)}Jt
-                        </TableCell>
-                        <TableCell className={`text-right ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
-                          {item.variancePercent > 0 ? '+' : ''}{item.variancePercent}%
-                        </TableCell>
-                        <TableCell>
-                          {item.variance < 0 ? (
-                            <Badge variant="destructive">Melebihi Anggaran</Badge>
-                          ) : (
-                            <Badge className="bg-green-500">Di Bawah Anggaran</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Kategori</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Anggaran</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Aktual</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Varians</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Varians %</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {varianceData.map((item) => (
+                          <TableRow key={item.category}>
+                            <TableCell className="font-medium text-xs sm:text-sm">{item.category}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">Rp {(item.budget / 1000000).toFixed(0)}Jt</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">Rp {(item.actual / 1000000).toFixed(0)}Jt</TableCell>
+                            <TableCell className={`text-right font-medium text-xs sm:text-sm ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                              Rp {(Math.abs(item.variance) / 1000000).toFixed(0)}Jt
+                            </TableCell>
+                            <TableCell className={`text-right text-xs sm:text-sm ${item.variance < 0 ? 'text-red-500' : 'text-green-600'}`}>
+                              {item.variancePercent > 0 ? '+' : ''}{item.variancePercent}%
+                            </TableCell>
+                            <TableCell>
+                              {item.variance < 0 ? (
+                                <Badge variant="destructive" className="text-xs">Melebihi Anggaran</Badge>
+                              ) : (
+                                <Badge className="bg-green-500 text-xs">Di Bawah Anggaran</Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             {/* Beautiful Variance Chart */}
             <Card>
-              <CardHeader>
-                <CardTitle>Visualisasi Varians {selectedYear}</CardTitle>
-                <CardDescription>Anggaran vs pengeluaran aktual per kategori</CardDescription>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg">Visualisasi Varians {selectedYear}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Anggaran vs pengeluaran aktual per kategori</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
+                <ResponsiveContainer width="100%" height={300} className="sm:h-[400px]">
                   <BarChart 
                     data={varianceData}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -593,17 +597,17 @@ export default function Reporting() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
                     <XAxis 
                       dataKey="category" 
-                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
                       axisLine={{ stroke: '#d1d5db' }}
                     />
                     <YAxis 
                       tickFormatter={(value) => `${(value / 1000000000).toFixed(1)}M`}
-                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
                       axisLine={{ stroke: '#d1d5db' }}
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend 
-                      wrapperStyle={{ paddingTop: '20px' }}
+                      wrapperStyle={{ paddingTop: '20px', fontSize: 12 }}
                       iconType="circle"
                     />
                     <Bar 

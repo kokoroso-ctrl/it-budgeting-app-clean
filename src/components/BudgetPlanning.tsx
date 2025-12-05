@@ -155,30 +155,30 @@ export default function BudgetPlanning() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Budget Planning</h2>
-          <p className="text-muted-foreground">Create and manage annual IT budgets</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Budget Planning</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Create and manage annual IT budgets</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button size="sm" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Create Budget
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
-              <DialogTitle>Create New Budget</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Create New Budget</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Define a new budget allocation for your IT department
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Budget Name</Label>
+                  <Label htmlFor="name" className="text-sm">Budget Name</Label>
                   <Input
                     id="name"
                     placeholder="e.g., Q1 2024 Infrastructure"
@@ -188,7 +188,7 @@ export default function BudgetPlanning() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Jumlah (Rp)</Label>
+                  <Label htmlFor="amount" className="text-sm">Jumlah (Rp)</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -200,7 +200,7 @@ export default function BudgetPlanning() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="year">Year</Label>
                   <Select value={formData.year} onValueChange={(value) => setFormData({ ...formData, year: value })}>
@@ -247,7 +247,7 @@ export default function BudgetPlanning() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-sm">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Describe the purpose of this budget..."
@@ -258,7 +258,7 @@ export default function BudgetPlanning() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="approver">Approver</Label>
+                <Label htmlFor="approver" className="text-sm">Approver</Label>
                 <Input
                   id="approver"
                   placeholder="e.g., Jane Doe, John Smith"
@@ -267,11 +267,11 @@ export default function BudgetPlanning() {
                 />
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                   {isSubmitting ? "Creating..." : "Create Budget"}
                 </Button>
               </div>
@@ -281,72 +281,73 @@ export default function BudgetPlanning() {
       </div>
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
+        <div className="bg-destructive/10 border border-destructive text-destructive px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
           {error}
         </div>
       )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-muted-foreground">Loading budgets...</div>
+          <div className="text-sm text-muted-foreground">Loading budgets...</div>
         </div>
       ) : budgets.length === 0 ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <p className="text-muted-foreground mb-4">No budgets found</p>
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <p className="text-sm text-muted-foreground mb-4">No budgets found</p>
+            <Button onClick={() => setIsDialogOpen(true)} size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Budget
             </Button>
           </div>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {budgets.map((budget) => (
             <Card key={budget.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                   <div className="space-y-1">
-                    <CardTitle>{budget.name}</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-base sm:text-lg">{budget.name}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                       {budget.year} • {budget.quarter} • Created by {budget.createdBy}
                     </CardDescription>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center">
                     {getStatusBadge(budget.status)}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Category</p>
-                    <p className="font-medium">{budget.category}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Category</p>
+                    <p className="font-medium text-sm sm:text-base">{budget.category}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Amount</p>
-                    <p className="font-medium text-lg">Rp {(budget.amount / 1000000).toFixed(0)}Jt</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Amount</p>
+                    <p className="font-medium text-base sm:text-lg">Rp {(budget.amount / 1000000).toFixed(0)}Jt</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Approver</p>
-                    <p className="font-medium">{budget.approver || "-"}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Approver</p>
+                    <p className="font-medium text-sm sm:text-base truncate">{budget.approver || "-"}</p>
                   </div>
-                  <div className="flex justify-end space-x-2">
+                  <div className="col-span-2 lg:col-span-1 flex justify-start lg:justify-end gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDelete(budget.id)}
+                      className="flex-1 sm:flex-none"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </Button>
                     {budget.status === "draft" && (
-                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'pending')}>
-                        Submit for Approval
+                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'pending')} className="flex-1 sm:flex-none">
+                        Submit
                       </Button>
                     )}
                     {budget.status === "pending" && (
-                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'approved')}>
+                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'approved')} className="flex-1 sm:flex-none">
                         Approve
                       </Button>
                     )}
