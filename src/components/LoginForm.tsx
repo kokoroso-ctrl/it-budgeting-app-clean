@@ -44,21 +44,25 @@ export default function LoginForm() {
       <div className="w-full max-w-md">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 mb-4 shadow-lg">
-            <span className="text-white font-bold text-2xl">M</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <img 
+              src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/logommg-1764895004570.png?width=8000&height=8000&resize=contain"
+              alt="MAMAGREEN Logo"
+              className="h-24 w-auto object-contain"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
             MAMAGREEN IT Budgeting
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600 px-2">
             Kelola anggaran dan pantau pengeluaran IT dengan mudah: Hardware, Lisensi Software, Website,
             Aksesoris & Office Supply, Jasa Maintenance, dan Network.
           </p>
         </div>
 
         {/* Login Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
+          <h2 className="text-xl sm:text-2xl font-semibold text-center mb-6 text-gray-800">
             Masuk ke IT Budgeting
           </h2>
 
