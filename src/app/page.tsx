@@ -81,8 +81,7 @@ export default function Home() {
                 className="h-12 w-auto object-contain"
               />
               <div>
-                <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">PT MAMAGREEN PACIFIC</h1>
-                <p className="text-xs text-muted-foreground">IT Budgeting</p>
+                <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">IT Budgeting</h1>
               </div>
             </div>
             <Button
