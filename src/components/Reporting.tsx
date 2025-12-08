@@ -347,7 +347,6 @@ export default function Reporting() {
                   />
                   <div>
                     <h1 className="text-xl font-bold">PT MAMAGREEN PACIFIC</h1>
-                    <h2 className="text-base font-semibold">IT Budgeting</h2>
                     <p className="text-xs mt-1">
                       Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
                     </p>
