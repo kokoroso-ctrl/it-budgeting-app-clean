@@ -346,7 +346,8 @@ export default function Reporting() {
                     className="h-12 w-auto object-contain"
                   />
                   <div>
-                    <h1 className="text-xl font-bold">IT Budgeting</h1>
+                    <h1 className="text-xl font-bold">PT MAMAGREEN PACIFIC</h1>
+                    <h2 className="text-base font-semibold">IT Budgeting</h2>
                     <p className="text-xs mt-1">
                       Jl. Gunung Kelir No. 11, Karanganyar, Tugu, Semarang, Jawa Tengah
                     </p>
