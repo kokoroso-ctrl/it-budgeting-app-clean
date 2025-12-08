@@ -16,6 +16,16 @@ import { toast } from "sonner";
 
 const COLORS = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
 
+// Modern color palette for categories
+const CATEGORY_COLORS: { [key: string]: string } = {
+  'Hardware': '#a855f7',      // Purple
+  'Software': '#3b82f6',       // Blue
+  'Website': '#06b6d4',        // Cyan
+  'Services': '#f59e0b',       // Orange
+  'Infrastructure': '#10b981', // Green
+  'Accessories & Office Supply': '#6b7280' // Gray
+};
+
 export default function Dashboard() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
@@ -682,19 +692,22 @@ export default function Dashboard() {
   // Calculate total spending from filtered data
   const totalSpending = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   
-  // Group by category for pie chart
+  // Group by category for pie chart with transaction count
   const categoryData = filteredExpenses.reduce((acc: any, exp) => {
     if (!acc[exp.category]) {
-      acc[exp.category] = 0;
+      acc[exp.category] = { total: 0, count: 0 };
     }
-    acc[exp.category] += exp.amount;
+    acc[exp.category].total += exp.amount;
+    acc[exp.category].count += 1;
     return acc;
   }, {});
 
-  const pieData = Object.entries(categoryData).map(([name, value]: [string, any]) => ({
+  const pieData = Object.entries(categoryData).map(([name, data]: [string, any]) => ({
     name,
-    value,
-    percentage: ((value / totalSpending) * 100).toFixed(0)
+    value: data.total,
+    count: data.count,
+    percentage: ((data.total / totalSpending) * 100).toFixed(0),
+    color: CATEGORY_COLORS[name] || '#6b7280'
   }));
 
   // Group by month for trend chart
@@ -822,11 +835,11 @@ export default function Dashboard() {
 
       {/* Charts Section */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
-        {/* Pie Chart */}
+        {/* Modern Donut Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Pengeluaran per Kategori</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Distribusi pengeluaran berdasarkan kategori</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Kategori Tiket</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Distribusi berdasarkan kategori</CardDescription>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
@@ -834,25 +847,65 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Belum ada data</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percentage }) => `${name}: ${percentage}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: any) => `Rp ${value.toLocaleString('id-ID')}`} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="space-y-4">
+                {/* Donut Chart */}
+                <ResponsiveContainer width="100%" height={250} className="sm:h-[280px]">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percentage }) => `${name} ${percentage}%`}
+                      labelLine={{
+                        stroke: '#94a3b8',
+                        strokeWidth: 1
+                      }}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any) => `Rp ${value.toLocaleString('id-ID')}`}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '8px 12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Modern Legend Badges */}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {pieData.map((entry, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
+                      style={{ 
+                        borderColor: entry.color,
+                        backgroundColor: `${entry.color}15`
+                      }}
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span 
+                        className="text-xs font-medium"
+                        style={{ color: entry.color }}
+                      >
+                        {entry.name}: {entry.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
