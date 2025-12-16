@@ -52,6 +52,14 @@ export async function POST(request: NextRequest) {
       .pbkdf2Sync(currentPassword, salt, 10000, 64, "sha512")
       .toString("hex");
 
+    console.log("Password check:", {
+      inputPassword: currentPassword,
+      salt,
+      currentHash: currentHash.substring(0, 20) + "...",
+      storedHash: hash.substring(0, 20) + "...",
+      match: currentHash === hash
+    });
+
     if (currentHash !== hash) {
       return NextResponse.json(
         { error: "Password saat ini salah" },
