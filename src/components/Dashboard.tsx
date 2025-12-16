@@ -837,11 +837,11 @@ export default function Dashboard() {
       {/* Charts Section */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Modern Donut Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Kategori Tiket</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Distribusi berdasarkan kategori</CardDescription>
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Kategori Pengeluaran</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Distribusi berdasarkan kategori</CardDescription>
+            </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
               <div className="flex items-center justify-center h-[250px] sm:h-[300px]">
