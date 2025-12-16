@@ -246,9 +246,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, category, contracts, status } = body;
 
-    const updates: any = {
-      updatedAt: new Date(),
-    };
+      const updates: any = {};
 
     // Validate and add name if provided
     if (name !== undefined) {
