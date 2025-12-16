@@ -130,28 +130,28 @@ export default function BudgetPlanning() {
     }
   };
 
-  const handleStatusUpdate = async (id: number, newStatus: string) => {
-    try {
-      setError(null);
-      const response = await fetch(`/api/budgets?id=${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: newStatus
-        }),
-      });
+    const handleStatusUpdate = async (id: number, newStatus: string) => {
+      try {
+        setError(null);
+        const response = await fetch(`/api/budgets?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            status: newStatus
+          }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update budget');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Gagal memperbarui anggaran');
+        }
+
+        await fetchBudgets();
+      } catch (err: any) {
+        setError(err.message || 'Gagal memperbarui status anggaran');
+        console.error('Status update error:', err);
       }
-
-      await fetchBudgets();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update budget status');
-      console.error('Status update error:', err);
-    }
-  };
+    };
 
     const handleDelete = async (id: number) => {
       if (!confirm("Apakah Anda yakin ingin menghapus anggaran ini?")) return;
