@@ -70,6 +70,8 @@ export default function BudgetPlanning() {
     setError(null);
 
     try {
+      const currentUser = session?.user?.name || session?.user?.email || "Current User";
+      
       const payload = {
         name: formData.name,
         year: parseInt(formData.year),
@@ -77,7 +79,7 @@ export default function BudgetPlanning() {
         category: formData.category,
         amount: parseFloat(formData.amount),
         status: editingBudget ? editingBudget.status : "draft",
-        createdBy: editingBudget ? editingBudget.createdBy : "Current User",
+        createdBy: editingBudget ? currentUser : currentUser,
         approver: formData.approver || null,
         description: formData.description || null,
       };
