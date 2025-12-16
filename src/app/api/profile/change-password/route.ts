@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import { account } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
