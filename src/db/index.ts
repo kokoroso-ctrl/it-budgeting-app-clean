@@ -9,9 +9,11 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 const databaseUrl = process.env.DATABASE_URL || 
-  `postgresql://postgres.xpdjggmhifobuelsjkoh@db.xpdjggmhifobuelsjkoh.supabase.co:5432/postgres`;
+  `postgresql://postgres.xpdjggmhifobuelsjkoh:${process.env.DATABASE_PASSWORD}@aws-0-ap-south-1.pooler.supabase.com:5432/postgres`;
 
-const client = postgres(databaseUrl);
+const client = postgres(databaseUrl, {
+  prepare: false,
+});
 
 export const db = drizzle(client, { schema });
 
