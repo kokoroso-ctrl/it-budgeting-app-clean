@@ -11,13 +11,34 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function importFromTurso() {
   try {
-    // Read backup file
     const backup = JSON.parse(fs.readFileSync('turso-backup-1765866298361.json', 'utf8'));
+
+    // Import vendors
+    const vendors = backup.tables.vendors.rows;
+    console.log(`Importing ${vendors.length} vendors...`);
+    const { error: vendorError } = await supabase.from('vendors').insert(vendors);
+    if (vendorError) console.error('Vendor import error:', vendorError);
+    else console.log('✓ Vendors imported');
+
+    // Import budgets
+    const budgets = backup.tables.budgets.rows;
+    console.log(`Importing ${budgets.length} budgets...`);
+    const { error: budgetError } = await supabase.from('budgets').insert(budgets);
+    if (budgetError) console.error('Budget import error:', budgetError);
+    else console.log('✓ Budgets imported');
+
+    // Import users
+    const users = backup.tables.user.rows;
+    console.log(`Importing ${users.length} users...`);
+    for (const user of users) {
+      const { error: userError } = await supabase.from('user').insert(user);
+      if (userError) console.error('User import error:', userError);
+    }
+    console.log('✓ Users imported');
+
+    // Import expenses
     const expenses = backup.tables.expenses.rows;
-
     console.log(`Importing ${expenses.length} expenses...`);
-
-    // Map fields to match new schema (remove invoice fields)
     const mappedExpenses = expenses.map((exp: any) => ({
       id: exp.id,
       date: exp.date,
@@ -34,24 +55,15 @@ async function importFromTurso() {
       created_at: exp.created_at,
       updated_at: exp.updated_at
     }));
-
-    // Insert in batches of 50
     const batchSize = 50;
     for (let i = 0; i < mappedExpenses.length; i += batchSize) {
       const batch = mappedExpenses.slice(i, i + batchSize);
-      
-      const { error } = await supabase
-        .from('expenses')
-        .insert(batch);
-
-      if (error) {
-        console.error(`Error inserting batch ${i / batchSize + 1}:`, error);
-      } else {
-        console.log(`Imported batch ${i / batchSize + 1} (${batch.length} items)`);
-      }
+      const { error } = await supabase.from('expenses').insert(batch);
+      if (error) console.error(`Expense batch ${i / batchSize + 1} error:`, error);
+      else console.log(`✓ Expenses batch ${i / batchSize + 1}`);
     }
 
-    console.log('Import completed!');
+    console.log('✅ Import completed!');
   } catch (error) {
     console.error('Import failed:', error);
   }
