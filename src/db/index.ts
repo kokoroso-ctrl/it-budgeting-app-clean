@@ -9,7 +9,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 const databaseUrl = process.env.DATABASE_URL || 
-  `postgresql://postgres.xpdjggmhifobuelsjkoh:${process.env.DATABASE_PASSWORD}@aws-0-ap-south-1.pooler.supabase.com:5432/postgres`;
+  `postgresql://postgres.xpdjggmhifobuelsjkoh:${process.env.DATABASE_PASSWORD}@aws-1-ap-south-1.pooler.supabase.com:5432/postgres`;
 
 const client = postgres(databaseUrl, {
   prepare: false,
