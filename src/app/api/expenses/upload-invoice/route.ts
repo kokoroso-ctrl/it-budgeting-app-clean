@@ -79,17 +79,17 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Data = buffer.toString('base64');
 
-    // Update expense record with base64 data
-    const updatedExpense = await db
-      .update(expenses)
-      .set({
-        invoiceData: base64Data,
-        invoiceMimeType: file.type,
-        invoiceFilename: file.name,
-        updatedAt: new Date().toISOString()
-      })
-      .where(eq(expenses.id, parsedExpenseId))
-      .returning();
+      // Update expense record with base64 data
+      const updatedExpense = await db
+        .update(expenses)
+        .set({
+          invoiceData: base64Data,
+          invoiceMimeType: file.type,
+          invoiceFilename: file.name,
+          updatedAt: new Date()
+        })
+        .where(eq(expenses.id, parsedExpenseId))
+        .returning();
 
     if (updatedExpense.length === 0) {
       return NextResponse.json(
