@@ -320,93 +320,93 @@ export default function BudgetPlanning() {
         </Dialog>
       </div>
 
-      {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
-          {error}
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-muted-foreground">Loading budgets...</div>
-        </div>
-      ) : budgets.length === 0 ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">No budgets found</p>
-            <Button onClick={() => setIsDialogOpen(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Budget
-            </Button>
+        {error && (
+          <div className="bg-destructive/10 border border-destructive text-destructive px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
+            {error}
           </div>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:gap-4">
-          {budgets.map((budget) => (
-            <Card key={budget.id}>
-              <CardHeader className="pb-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base sm:text-lg">{budget.name}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">
-                      {budget.year} • {budget.quarter} • Created by {budget.createdBy}
-                    </CardDescription>
+        )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-sm text-muted-foreground">Memuat anggaran...</div>
+          </div>
+        ) : budgets.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">Tidak ada anggaran ditemukan</p>
+              <Button onClick={() => setIsDialogOpen(true)} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Buat Anggaran Pertama
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:gap-4">
+            {budgets.map((budget) => (
+              <Card key={budget.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base sm:text-lg">{budget.name}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">
+                        {budget.year} • {budget.quarter} • Dibuat oleh {budget.createdBy}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center">
+                      {getStatusBadge(budget.status)}
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    {getStatusBadge(budget.status)}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Category</p>
-                    <p className="font-medium text-sm sm:text-base">{budget.category}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Amount</p>
-                    <p className="font-medium text-base sm:text-lg">Rp {(budget.amount / 1000000).toFixed(0)}Jt</p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Approver</p>
-                    <p className="font-medium text-sm sm:text-base truncate">{budget.approver || "-"}</p>
-                  </div>
-                  <div className="col-span-2 lg:col-span-1 flex justify-start lg:justify-end gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEdit(budget)}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDelete(budget.id)}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
-                    {budget.status === "draft" && (
-                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'pending')} className="flex-1 sm:flex-none">
-                        Submit
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Kategori</p>
+                      <p className="font-medium text-sm sm:text-base">{budget.category}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Jumlah</p>
+                      <p className="font-medium text-base sm:text-lg">Rp {(budget.amount / 1000000).toFixed(0)}Jt</p>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Penyetuju</p>
+                      <p className="font-medium text-sm sm:text-base truncate">{budget.approver || "-"}</p>
+                    </div>
+                    <div className="col-span-2 lg:col-span-1 flex justify-start lg:justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEdit(budget)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
                       </Button>
-                    )}
-                    {budget.status === "pending" && (
-                      <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'approved')} className="flex-1 sm:flex-none">
-                        Approve
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDelete(budget.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Hapus
                       </Button>
-                    )}
+                      {budget.status === "draft" && (
+                        <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'pending')} className="flex-1 sm:flex-none">
+                          Kirim
+                        </Button>
+                      )}
+                      {budget.status === "pending" && (
+                        <Button size="sm" onClick={() => handleStatusUpdate(budget.id, 'approved')} className="flex-1 sm:flex-none">
+                          Setujui
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
     </div>
   );
 }
