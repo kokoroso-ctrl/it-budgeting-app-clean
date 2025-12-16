@@ -91,23 +91,23 @@ export async function GET(request: NextRequest) {
 
     const results = await query.limit(limit).offset(offset);
 
-    // Calculate total spent for each vendor from expenses
-    const vendorsWithTotals = await Promise.all(
-      results.map(async (vendor) => {
-        const totalSpentResult = await db.select({
-          total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
-        })
-        .from(expenses)
-        .where(eq(expenses.vendor, vendor.name));
+      // Calculate total spent for each vendor from expenses
+      const vendorsWithTotals = await Promise.all(
+        results.map(async (vendor) => {
+          const totalSpentResult = await db.select({
+            total: sql<number>`COALESCE(SUM(CAST(${expenses.amount} AS NUMERIC)), 0)`,
+          })
+          .from(expenses)
+          .where(eq(expenses.vendor, vendor.name));
 
-        const totalSpent = totalSpentResult[0]?.total || 0;
+          const totalSpent = Number(totalSpentResult[0]?.total) || 0;
 
-        return {
-          ...vendor,
-          totalSpent,
-        };
-      }),
-    );
+          return {
+            ...vendor,
+            totalSpent,
+          };
+        }),
+      );
 
     // Sort by totalSpent if requested
     if (sortField === 'totalSpent') {
