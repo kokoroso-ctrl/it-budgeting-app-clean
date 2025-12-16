@@ -47,23 +47,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [salt, hash] = userAccount[0].password.split(":");
-    const currentHash = crypto
-      .pbkdf2Sync(currentPassword, salt, 100000, 64, "sha512")
-      .toString("hex");
+    const isPasswordValid = await password.verify({
+      password: currentPassword,
+      hash: userAccount[0].password,
+    });
 
-    if (currentHash !== hash) {
+    if (!isPasswordValid) {
       return NextResponse.json(
         { error: "Password saat ini salah" },
         { status: 400 }
       );
     }
 
-    const newSalt = crypto.randomBytes(16).toString("hex");
-    const newHash = crypto
-      .pbkdf2Sync(newPassword, newSalt, 100000, 64, "sha512")
-      .toString("hex");
-    const hashedPassword = `${newSalt}:${newHash}`;
+    const hashedPassword = await password.hash(newPassword);
 
     await db
       .update(account)
