@@ -49,16 +49,8 @@ export async function POST(request: NextRequest) {
 
     const [salt, hash] = userAccount[0].password.split(":");
     const currentHash = crypto
-      .pbkdf2Sync(currentPassword, salt, 10000, 64, "sha512")
+      .pbkdf2Sync(currentPassword, salt, 100000, 64, "sha512")
       .toString("hex");
-
-    console.log("Password check:", {
-      inputPassword: currentPassword,
-      salt,
-      currentHash: currentHash.substring(0, 20) + "...",
-      storedHash: hash.substring(0, 20) + "...",
-      match: currentHash === hash
-    });
 
     if (currentHash !== hash) {
       return NextResponse.json(
@@ -69,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const newSalt = crypto.randomBytes(16).toString("hex");
     const newHash = crypto
-      .pbkdf2Sync(newPassword, newSalt, 10000, 64, "sha512")
+      .pbkdf2Sync(newPassword, newSalt, 100000, 64, "sha512")
       .toString("hex");
     const hashedPassword = `${newSalt}:${newHash}`;
 
