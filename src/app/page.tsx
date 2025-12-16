@@ -59,7 +59,6 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -67,7 +66,6 @@ export default function Home() {
         />
       )}
 
-      {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
         w-64 transform transition-transform duration-300 ease-in-out
@@ -114,7 +112,6 @@ export default function Home() {
         </nav>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto w-full">
         <header className="border-b bg-card sticky top-0 z-10">
           <div className="flex items-center justify-between p-3 sm:p-4 gap-2">
