@@ -178,7 +178,7 @@ export default function Reporting() {
   };
 
   const applyFilters = () => {
-    let filtered = [...expenses];
+    let filtered = [...expenses].filter((exp) => exp.status === 'approved');
 
     if (filterType === "month" && selectedMonth) {
       filtered = filtered.filter((exp) => {
