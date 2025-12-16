@@ -189,19 +189,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create vendor (totalSpent removed - will be calculated from expenses)
-    const now = new Date();
-    const newVendor = await db.insert(vendors)
-      .values({
-        name: trimmedName,
-        category: trimmedCategory,
-        totalSpent: 0, // Set to 0, will be calculated from expenses
-        contracts: validatedContracts,
-        status,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning();
+      // Create vendor (totalSpent removed - will be calculated from expenses)
+      const newVendor = await db.insert(vendors)
+        .values({
+          name: trimmedName,
+          category: trimmedCategory,
+          totalSpent: 0, // Set to 0, will be calculated from expenses
+          contracts: validatedContracts,
+          status,
+        })
+        .returning();
 
     // Calculate total spent from expenses
     const totalSpentResult = await db.select({
