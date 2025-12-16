@@ -311,9 +311,9 @@ export async function PUT(request: NextRequest) {
     // Clean data based on category
     const cleanedData = cleanDataByCategory(body, existing[0].category);
 
-    const updateData: any = {
-      updatedAt: new Date().toISOString()
-    };
+      const updateData: any = {
+        updatedAt: new Date()
+      };
 
     if (cleanedData.date !== undefined) updateData.date = cleanedData.date;
     if (cleanedData.vendor !== undefined) updateData.vendor = cleanedData.vendor.trim();
