@@ -17,10 +17,28 @@ async function importFromTurso() {
 
     console.log(`Importing ${expenses.length} expenses...`);
 
+    // Map fields to match new schema (remove invoice fields)
+    const mappedExpenses = expenses.map((exp: any) => ({
+      id: exp.id,
+      date: exp.date,
+      vendor: exp.vendor,
+      category: exp.category,
+      description: exp.description,
+      amount: exp.amount,
+      status: exp.status,
+      po_number: exp.po_number,
+      warranty: exp.warranty,
+      expired_warranty: exp.expired_warranty,
+      license_type: exp.license_type,
+      expired_subscription: exp.expired_subscription,
+      created_at: exp.created_at,
+      updated_at: exp.updated_at
+    }));
+
     // Insert in batches of 50
     const batchSize = 50;
-    for (let i = 0; i < expenses.length; i += batchSize) {
-      const batch = expenses.slice(i, i + batchSize);
+    for (let i = 0; i < mappedExpenses.length; i += batchSize) {
+      const batch = mappedExpenses.slice(i, i + batchSize);
       
       const { error } = await supabase
         .from('expenses')
