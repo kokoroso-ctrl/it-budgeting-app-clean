@@ -153,26 +153,26 @@ export default function BudgetPlanning() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this budget?")) return;
+    const handleDelete = async (id: number) => {
+      if (!confirm("Apakah Anda yakin ingin menghapus anggaran ini?")) return;
 
-    try {
-      setError(null);
-      const response = await fetch(`/api/budgets?id=${id}`, {
-        method: 'DELETE',
-      });
+      try {
+        setError(null);
+        const response = await fetch(`/api/budgets?id=${id}`, {
+          method: 'DELETE',
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete budget');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Gagal menghapus anggaran');
+        }
+
+        await fetchBudgets();
+      } catch (err: any) {
+        setError(err.message || 'Gagal menghapus anggaran');
+        console.error('Delete error:', err);
       }
-
-      await fetchBudgets();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete budget');
-      console.error('Delete error:', err);
-    }
-  };
+    };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
