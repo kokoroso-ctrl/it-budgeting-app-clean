@@ -177,13 +177,13 @@ export default function BudgetPlanning() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Disetujui</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return <Badge className="bg-yellow-500"><Clock className="w-3 h-3 mr-1" />Menunggu</Badge>;
       case "draft":
-        return <Badge variant="secondary"><Edit className="w-3 h-3 mr-1" />Draft</Badge>;
+        return <Badge variant="secondary"><Edit className="w-3 h-3 mr-1" />Draf</Badge>;
       case "rejected":
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Ditolak</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
