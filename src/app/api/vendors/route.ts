@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
         }, { status: 404 });
       }
 
-      // Calculate total spent from expenses
-      const totalSpentResult = await db.select({
-        total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
-      })
-      .from(expenses)
-      .where(eq(expenses.vendor, vendor[0].name));
+        // Calculate total spent from expenses
+        const totalSpentResult = await db.select({
+          total: sql<number>`COALESCE(SUM(CAST(${expenses.amount} AS NUMERIC)), 0)`,
+        })
+        .from(expenses)
+        .where(eq(expenses.vendor, vendor[0].name));
 
-      const totalSpent = totalSpentResult[0]?.total || 0;
+        const totalSpent = Number(totalSpentResult[0]?.total) || 0;
 
       return NextResponse.json({ ...vendor[0], totalSpent }, { status: 200 });
     }
