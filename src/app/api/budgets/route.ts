@@ -214,14 +214,14 @@ export async function POST(request: NextRequest) {
 
     const sanitizedData = sanitizeBudgetData(body);
 
-    const newBudget = await db
-      .insert(budgets)
-      .values({
-        ...sanitizedData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .returning();
+      const newBudget = await db
+        .insert(budgets)
+        .values({
+          ...sanitizedData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
 
     return NextResponse.json(newBudget[0], { status: 201 });
   } catch (error) {
