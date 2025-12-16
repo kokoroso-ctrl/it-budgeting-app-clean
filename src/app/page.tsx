@@ -25,14 +25,15 @@ export default function Home() {
   }, [session, isPending, router]);
 
   const handleLogout = async () => {
-    const { error } = await authClient.signOut();
-    if (error?.code) {
-      toast.error("Gagal logout");
-    } else {
+    try {
       localStorage.removeItem("bearer_token");
+      await authClient.signOut();
       refetch();
       router.push("/login");
       toast.success("Logout berhasil");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Gagal logout");
     }
   };
 
