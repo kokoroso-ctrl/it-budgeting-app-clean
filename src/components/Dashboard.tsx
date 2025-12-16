@@ -486,37 +486,37 @@ export default function Dashboard() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSubmitting(true);
 
-    try {
-      const payload: any = {
-        date: new Date(formData.date).toISOString(),
-        vendor: formData.vendor,
-        category: formData.category,
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        status: isEditMode ? undefined : "pending",
-        poNumber: formData.poNumber,
-      };
+      try {
+        const payload: any = {
+          date: formData.date ? new Date(`${formData.date}T00:00:00Z`).toISOString() : new Date().toISOString(),
+          vendor: formData.vendor,
+          category: formData.category,
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          status: isEditMode ? undefined : "pending",
+          poNumber: formData.poNumber,
+        };
 
-      if (formData.category === "Hardware") {
-        payload.warranty = formData.warranty || null;
-        payload.expiredWarranty = formData.expiredWarranty ? new Date(formData.expiredWarranty).toISOString() : null;
-        payload.licenseType = null;
-        payload.expiredSubscription = null;
-      } else if (formData.category === "Software" || formData.category === "Website") {
-        payload.licenseType = formData.licenseType || null;
-        payload.expiredSubscription = formData.expiredSubscription ? new Date(formData.expiredSubscription).toISOString() : null;
-        payload.warranty = null;
-        payload.expiredWarranty = null;
-      } else {
-        payload.warranty = null;
-        payload.expiredWarranty = null;
-        payload.licenseType = null;
-        payload.expiredSubscription = null;
-      }
+        if (formData.category === "Hardware") {
+          payload.warranty = formData.warranty || null;
+          payload.expiredWarranty = formData.expiredWarranty ? new Date(`${formData.expiredWarranty}T00:00:00Z`).toISOString() : null;
+          payload.licenseType = null;
+          payload.expiredSubscription = null;
+        } else if (formData.category === "Software" || formData.category === "Website") {
+          payload.licenseType = formData.licenseType || null;
+          payload.expiredSubscription = formData.expiredSubscription ? new Date(`${formData.expiredSubscription}T00:00:00Z`).toISOString() : null;
+          payload.warranty = null;
+          payload.expiredWarranty = null;
+        } else {
+          payload.warranty = null;
+          payload.expiredWarranty = null;
+          payload.licenseType = null;
+          payload.expiredSubscription = null;
+        }
 
       if (isEditMode && editingId !== null) {
         const response = await fetch(`/api/expenses?id=${editingId}`, {
