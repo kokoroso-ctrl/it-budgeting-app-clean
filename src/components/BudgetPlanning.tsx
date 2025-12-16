@@ -83,36 +83,36 @@ export default function BudgetPlanning() {
       const url = editingBudget ? `/api/budgets?id=${editingBudget.id}` : '/api/budgets';
       const method = editingBudget ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${editingBudget ? 'update' : 'create'} budget`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Gagal ${editingBudget ? 'memperbarui' : 'membuat'} anggaran`);
+        }
+
+        await fetchBudgets();
+        setIsDialogOpen(false);
+        setEditingBudget(null);
+        setFormData({
+          name: "",
+          year: "2024",
+          quarter: "Q1",
+          category: "Hardware",
+          amount: "",
+          description: "",
+          approver: "",
+        });
+      } catch (err: any) {
+        setError(err.message || 'Terjadi kesalahan');
+        console.error('Submit error:', err);
+      } finally {
+        setIsSubmitting(false);
       }
-
-      await fetchBudgets();
-      setIsDialogOpen(false);
-      setEditingBudget(null);
-      setFormData({
-        name: "",
-        year: "2024",
-        quarter: "Q1",
-        category: "Hardware",
-        amount: "",
-        description: "",
-        approver: "",
-      });
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-      console.error('Submit error:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
