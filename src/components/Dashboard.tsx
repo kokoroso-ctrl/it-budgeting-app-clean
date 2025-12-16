@@ -689,8 +689,9 @@ export default function Dashboard() {
     setIsDetailDialogOpen(true);
   };
 
-  // Calculate total spending from filtered data
-  const totalSpending = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    // Calculate total spending from filtered data (only approved)
+    const approvedExpenses = filteredExpenses.filter(exp => exp.status === 'approved');
+    const totalSpending = approvedExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   
   // Group by category for pie chart with transaction count
   const categoryData = filteredExpenses.reduce((acc: any, exp) => {
