@@ -47,106 +47,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      currentPassword,
-      userAccount[0].password
-    );
+    const [salt, hash] = userAccount[0].password.split(":");
+    const currentHash = crypto
+      .pbkdf2Sync(currentPassword, salt, 10000, 64, "sha512")
+      .toString("hex");
 
-    if (!isPasswordValid) {
+    if (currentHash !== hash) {
       return NextResponse.json(
         { error: "Password saat ini salah" },
         { status: 400 }
       );
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await db
-      .update(account)
-      .set({
-        password: hashedPassword,
-        updatedAt: new Date(),
-      })
-      .where(eq(account.userId, session.user.id));
-
-    return NextResponse.json({
-      success: true,
-      message: "Password berhasil diubah",
-    });
-  } catch (error) {
-    console.error("Error changing password:", error);
-    return NextResponse.json(
-      { error: "Gagal mengubah password" },
-      { status: 500 }
-    );
-  }
-}
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { db } from "@/db";
-import { account } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import crypto from "crypto";
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { currentPassword, newPassword } = body;
-
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json(
-        { error: "Password saat ini dan password baru harus diisi" },
-        { status: 400 }
-      );
-    }
-
-    if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "Password baru minimal 8 karakter" },
-        { status: 400 }
-      );
-    }
-
-    const userAccount = await db
-      .select()
-      .from(account)
-      .where(eq(account.userId, session.user.id))
-      .limit(1);
-
-    if (!userAccount.length || !userAccount[0].password) {
-      return NextResponse.json(
-        { error: "Akun tidak ditemukan" },
-        { status: 404 }
-      );
-    }
-
-      const [salt, hash] = userAccount[0].password.split(":");
-      const currentHash = crypto
-        .pbkdf2Sync(currentPassword, salt, 10000, 64, "sha512")
-        .toString("hex");
-
-      if (currentHash !== hash) {
-        return NextResponse.json(
-          { error: "Password saat ini salah" },
-          { status: 400 }
-        );
-      }
-
-      const newSalt = crypto.randomBytes(16).toString("hex");
-      const newHash = crypto
-        .pbkdf2Sync(newPassword, newSalt, 10000, 64, "sha512")
-        .toString("hex");
-      const hashedPassword = `${newSalt}:${newHash}`;
+    const newSalt = crypto.randomBytes(16).toString("hex");
+    const newHash = crypto
+      .pbkdf2Sync(newPassword, newSalt, 10000, 64, "sha512")
+      .toString("hex");
+    const hashedPassword = `${newSalt}:${newHash}`;
 
     await db
       .update(account)
