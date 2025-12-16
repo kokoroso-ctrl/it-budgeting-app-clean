@@ -244,24 +244,22 @@ export async function POST(request: NextRequest) {
     // Clean data based on category
     const cleanedData = cleanDataByCategory(body);
 
-    const insertData: any = {
-      date: cleanedData.date,
-      vendor: cleanedData.vendor.trim(),
-      category: cleanedData.category,
-      description: cleanedData.description.trim(),
-      amount: typeof cleanedData.amount === 'string' ? parseFloat(cleanedData.amount) : cleanedData.amount,
-      status: cleanedData.status,
-      poNumber: cleanedData.poNumber.trim(),
-      warranty: cleanedData.warranty || null,
-      expiredWarranty: cleanedData.expiredWarranty || null,
-      licenseType: cleanedData.licenseType || null,
-      expiredSubscription: cleanedData.expiredSubscription || null,
-      invoiceData: null,
-      invoiceMimeType: null,
-      invoiceFilename: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      const insertData: any = {
+        date: cleanedData.date,
+        vendor: cleanedData.vendor.trim(),
+        category: cleanedData.category,
+        description: cleanedData.description.trim(),
+        amount: typeof cleanedData.amount === 'string' ? parseFloat(cleanedData.amount) : cleanedData.amount,
+        status: cleanedData.status,
+        poNumber: cleanedData.poNumber.trim(),
+        warranty: cleanedData.warranty || null,
+        expiredWarranty: cleanedData.expiredWarranty || null,
+        licenseType: cleanedData.licenseType || null,
+        expiredSubscription: cleanedData.expiredSubscription || null,
+        invoiceData: null,
+        invoiceMimeType: null,
+        invoiceFilename: null
+      };
 
     const newExpense = await db.insert(expenses)
       .values(insertData)
