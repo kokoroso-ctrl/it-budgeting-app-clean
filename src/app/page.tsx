@@ -94,22 +94,22 @@ export default function Home() {
             </Button>
           </div>
         </div>
-        <nav className="space-y-1 px-3 pb-4">
-          {navigation.map((item) => (
-            <Button
-              key={item.id}
-              variant={activeTab === item.id ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => {
-                setActiveTab(item.id);
-                setSidebarOpen(false);
-              }}
-            >
-              <item.icon className="mr-3 h-5 w-5" />
-              <span className="text-sm sm:text-base">{item.name}</span>
-            </Button>
-          ))}
-        </nav>
+          <nav className="space-y-1 px-3 pb-4">
+            {navigation.filter(item => item.id !== "profile").map((item) => (
+              <Button
+                key={item.id}
+                variant={activeTab === item.id ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                <span className="text-sm sm:text-base">{item.name}</span>
+              </Button>
+            ))}
+          </nav>
       </aside>
 
       <main className="flex-1 overflow-y-auto w-full">
