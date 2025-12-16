@@ -32,21 +32,21 @@ export default function BudgetPlanning() {
     fetchBudgets();
   }, []);
 
-  const fetchBudgets = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await fetch('/api/budgets?sort=year&order=desc');
-      if (!response.ok) throw new Error('Failed to fetch budgets');
-      const data = await response.json();
-      setBudgets(data);
-    } catch (err) {
-      setError('Failed to load budgets. Please try again.');
-      console.error('Fetch budgets error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fetchBudgets = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await fetch('/api/budgets?sort=year&order=desc');
+        if (!response.ok) throw new Error('Gagal mengambil anggaran');
+        const data = await response.json();
+        setBudgets(data);
+      } catch (err) {
+        setError('Gagal memuat anggaran. Silakan coba lagi.');
+        console.error('Fetch budgets error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   const handleEdit = (budget: any) => {
     setEditingBudget(budget);
