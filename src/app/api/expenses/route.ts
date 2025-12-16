@@ -241,11 +241,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Clean data based on category
-    const cleanedData = cleanDataByCategory(body);
+      // Clean data based on category
+      const cleanedData = cleanDataByCategory(body);
 
       const insertData: any = {
-        date: cleanedData.date,
+        date: new Date(cleanedData.date),
         vendor: cleanedData.vendor.trim(),
         category: cleanedData.category,
         description: cleanedData.description.trim(),
@@ -253,17 +253,17 @@ export async function POST(request: NextRequest) {
         status: cleanedData.status,
         poNumber: cleanedData.poNumber.trim(),
         warranty: cleanedData.warranty || null,
-        expiredWarranty: cleanedData.expiredWarranty || null,
+        expiredWarranty: cleanedData.expiredWarranty ? new Date(cleanedData.expiredWarranty) : null,
         licenseType: cleanedData.licenseType || null,
-        expiredSubscription: cleanedData.expiredSubscription || null,
+        expiredSubscription: cleanedData.expiredSubscription ? new Date(cleanedData.expiredSubscription) : null,
         invoiceData: null,
         invoiceMimeType: null,
         invoiceFilename: null
       };
 
-    const newExpense = await db.insert(expenses)
-      .values(insertData)
-      .returning();
+      const newExpense = await db.insert(expenses)
+        .values(insertData)
+        .returning();
 
     return NextResponse.json(newExpense[0], { status: 201 });
   } catch (error) {
