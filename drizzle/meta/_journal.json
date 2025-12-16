@@ -1,26 +1,12 @@
 {
   "version": "7",
-  "dialect": "sqlite",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "6",
-      "when": 1760666241206,
-      "tag": "0000_typical_inhumans",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1760941733338,
-      "tag": "0001_peaceful_kabuki",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1764899911996,
-      "tag": "0002_odd_colossus",
+      "version": "7",
+      "when": 1765866574379,
+      "tag": "0000_even_ricochet",
       "breakpoints": true
     }
   ]
