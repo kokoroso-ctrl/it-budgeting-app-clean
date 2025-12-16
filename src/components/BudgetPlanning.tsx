@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, CheckCircle, Clock, XCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function BudgetPlanning() {
+  const { data: session } = useSession();
   const [budgets, setBudgets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
