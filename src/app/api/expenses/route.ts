@@ -253,9 +253,9 @@ export async function POST(request: NextRequest) {
         status: cleanedData.status,
         poNumber: cleanedData.poNumber.trim(),
         warranty: cleanedData.warranty || null,
-        expiredWarranty: cleanedData.expiredWarranty ? new Date(cleanedData.expiredWarranty) : null,
+        expiredWarranty: cleanedData.expiredWarranty || null,
         licenseType: cleanedData.licenseType || null,
-        expiredSubscription: cleanedData.expiredSubscription ? new Date(cleanedData.expiredSubscription) : null,
+        expiredSubscription: cleanedData.expiredSubscription || null,
         invoiceData: null,
         invoiceMimeType: null,
         invoiceFilename: null
