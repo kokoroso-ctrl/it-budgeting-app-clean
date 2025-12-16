@@ -49,12 +49,13 @@ export default function Home() {
 
   if (!session?.user) return null;
 
-  const navigation = [
-    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
-    { id: "planning", name: "Budget Planning", icon: FileText },
-    { id: "tracking", name: "Vendor Tracking", icon: Receipt },
-    { id: "reporting", name: "Reports & Analytics", icon: BarChart3 },
-  ];
+    const navigation = [
+      { id: "dashboard", name: "Dashboard", icon: LayoutDashboard },
+      { id: "planning", name: "Budget Planning", icon: FileText },
+      { id: "tracking", name: "Vendor Tracking", icon: Receipt },
+      { id: "reporting", name: "Reports & Analytics", icon: BarChart3 },
+      { id: "profile", name: "Profil", icon: User },
+    ];
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
