@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
     // Single vendor fetch
     if (id) {
       if (!id || isNaN(parseInt(id))) {
-        return NextResponse.json({ 
-          error: "Valid ID is required",
-          code: "INVALID_ID" 
+        return NextResponse.json({
+          error: 'Valid ID is required',
+          code: 'INVALID_ID',
         }, { status: 400 });
       }
 
@@ -23,15 +23,15 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (vendor.length === 0) {
-        return NextResponse.json({ 
+        return NextResponse.json({
           error: 'Vendor not found',
-          code: 'VENDOR_NOT_FOUND' 
+          code: 'VENDOR_NOT_FOUND',
         }, { status: 404 });
       }
 
       // Calculate total spent from expenses
       const totalSpentResult = await db.select({
-        total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+        total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
       })
       .from(expenses)
       .where(eq(expenses.vendor, vendor[0].name));
@@ -53,14 +53,14 @@ export async function GET(request: NextRequest) {
     let query = db.select().from(vendors);
 
     // Build where conditions
-    const conditions = [];
+    const conditions = [] as any[];
 
     if (search) {
       conditions.push(
         or(
           like(vendors.name, `%${search}%`),
-          like(vendors.category, `%${search}%`)
-        )
+          like(vendors.category, `%${search}%`),
+        ),
       );
     }
 
@@ -78,13 +78,13 @@ export async function GET(request: NextRequest) {
 
     // Apply sorting (except totalSpent which needs to be calculated)
     if (sortField !== 'totalSpent') {
-      const sortColumn = sortField === 'contracts' ? vendors.contracts :
-                         sortField === 'createdAt' ? vendors.createdAt :
-                         sortField === 'updatedAt' ? vendors.updatedAt :
-                         sortField === 'category' ? vendors.category :
-                         vendors.name;
+      const sortColumn = sortField === 'contracts' ? vendors.contracts
+        : sortField === 'createdAt' ? vendors.createdAt
+        : sortField === 'updatedAt' ? vendors.updatedAt
+        : sortField === 'category' ? vendors.category
+        : vendors.name;
 
-      query = sortOrder === 'desc' 
+      query = sortOrder === 'desc'
         ? query.orderBy(desc(sortColumn))
         : query.orderBy(asc(sortColumn));
     }
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     const vendorsWithTotals = await Promise.all(
       results.map(async (vendor) => {
         const totalSpentResult = await db.select({
-          total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+          total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
         })
         .from(expenses)
         .where(eq(expenses.vendor, vendor.name));
@@ -104,16 +104,16 @@ export async function GET(request: NextRequest) {
 
         return {
           ...vendor,
-          totalSpent
+          totalSpent,
         };
-      })
+      }),
     );
 
     // Sort by totalSpent if requested
     if (sortField === 'totalSpent') {
       vendorsWithTotals.sort((a, b) => {
-        return sortOrder === 'desc' 
-          ? b.totalSpent - a.totalSpent 
+        return sortOrder === 'desc'
+          ? b.totalSpent - a.totalSpent
           : a.totalSpent - b.totalSpent;
       });
     }
@@ -121,8 +121,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(vendorsWithTotals, { status: 200 });
   } catch (error) {
     console.error('GET error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
+    return NextResponse.json({
+      error: 'Internal server error: ' + error,
     }, { status: 500 });
   }
 }
@@ -134,32 +134,32 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || typeof name !== 'string' || name.trim() === '') {
-      return NextResponse.json({ 
-        error: "Name is required and must be a non-empty string",
-        code: "MISSING_REQUIRED_FIELD" 
+      return NextResponse.json({
+        error: 'Name is required and must be a non-empty string',
+        code: 'MISSING_REQUIRED_FIELD',
       }, { status: 400 });
     }
 
     if (!category || typeof category !== 'string' || category.trim() === '') {
-      return NextResponse.json({ 
-        error: "Category is required and must be a non-empty string",
-        code: "MISSING_REQUIRED_FIELD" 
+      return NextResponse.json({
+        error: 'Category is required and must be a non-empty string',
+        code: 'MISSING_REQUIRED_FIELD',
       }, { status: 400 });
     }
 
     if (!status || typeof status !== 'string') {
-      return NextResponse.json({ 
-        error: "Status is required",
-        code: "MISSING_REQUIRED_FIELD" 
+      return NextResponse.json({
+        error: 'Status is required',
+        code: 'MISSING_REQUIRED_FIELD',
       }, { status: 400 });
     }
 
     // Validate status value
     const validStatuses = ['active', 'inactive'];
     if (!validStatuses.includes(status)) {
-      return NextResponse.json({ 
-        error: "Status must be one of: active, inactive",
-        code: "INVALID_STATUS" 
+      return NextResponse.json({
+        error: 'Status must be one of: active, inactive',
+        code: 'INVALID_STATUS',
       }, { status: 400 });
     }
 
@@ -174,38 +174,38 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingVendor.length > 0) {
-      return NextResponse.json({ 
-        error: "A vendor with this name already exists",
-        code: "DUPLICATE_VENDOR_NAME" 
+      return NextResponse.json({
+        error: 'A vendor with this name already exists',
+        code: 'DUPLICATE_VENDOR_NAME',
       }, { status: 400 });
     }
 
     // Validate contracts
     const validatedContracts = contracts !== undefined ? parseInt(contracts) : 0;
     if (isNaN(validatedContracts) || validatedContracts < 0 || !Number.isInteger(parseFloat(contracts || '0'))) {
-      return NextResponse.json({ 
-        error: "Contracts must be a non-negative integer",
-        code: "INVALID_CONTRACTS" 
+      return NextResponse.json({
+        error: 'Contracts must be a non-negative integer',
+        code: 'INVALID_CONTRACTS',
       }, { status: 400 });
     }
 
     // Create vendor (totalSpent removed - will be calculated from expenses)
-    const now = new Date().toISOString();
+    const now = new Date();
     const newVendor = await db.insert(vendors)
       .values({
         name: trimmedName,
         category: trimmedCategory,
         totalSpent: 0, // Set to 0, will be calculated from expenses
         contracts: validatedContracts,
-        status: status,
+        status,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       })
       .returning();
 
     // Calculate total spent from expenses
     const totalSpentResult = await db.select({
-      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
     })
     .from(expenses)
     .where(eq(expenses.vendor, trimmedName));
@@ -215,8 +215,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ...newVendor[0], totalSpent }, { status: 201 });
   } catch (error) {
     console.error('POST error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
+    return NextResponse.json({
+      error: 'Internal server error: ' + error,
     }, { status: 500 });
   }
 }
@@ -227,9 +227,9 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
+      return NextResponse.json({
+        error: 'Valid ID is required',
+        code: 'INVALID_ID',
       }, { status: 400 });
     }
 
@@ -240,25 +240,25 @@ export async function PUT(request: NextRequest) {
       .limit(1);
 
     if (existingVendor.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Vendor not found',
-        code: 'VENDOR_NOT_FOUND' 
+        code: 'VENDOR_NOT_FOUND',
       }, { status: 404 });
     }
 
     const body = await request.json();
     const { name, category, contracts, status } = body;
 
-      const updates: any = {
-        updatedAt: new Date()
-      };
+    const updates: any = {
+      updatedAt: new Date(),
+    };
 
     // Validate and add name if provided
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim() === '') {
-        return NextResponse.json({ 
-          error: "Name must be a non-empty string",
-          code: "INVALID_NAME" 
+        return NextResponse.json({
+          error: 'Name must be a non-empty string',
+          code: 'INVALID_NAME',
         }, { status: 400 });
       }
 
@@ -271,9 +271,9 @@ export async function PUT(request: NextRequest) {
         .limit(1);
 
       if (duplicateVendor.length > 0 && duplicateVendor[0].id !== parseInt(id)) {
-        return NextResponse.json({ 
-          error: "A vendor with this name already exists",
-          code: "DUPLICATE_VENDOR_NAME" 
+        return NextResponse.json({
+          error: 'A vendor with this name already exists',
+          code: 'DUPLICATE_VENDOR_NAME',
         }, { status: 400 });
       }
 
@@ -283,9 +283,9 @@ export async function PUT(request: NextRequest) {
     // Validate and add category if provided
     if (category !== undefined) {
       if (typeof category !== 'string' || category.trim() === '') {
-        return NextResponse.json({ 
-          error: "Category must be a non-empty string",
-          code: "INVALID_CATEGORY" 
+        return NextResponse.json({
+          error: 'Category must be a non-empty string',
+          code: 'INVALID_CATEGORY',
         }, { status: 400 });
       }
 
@@ -298,9 +298,9 @@ export async function PUT(request: NextRequest) {
     if (contracts !== undefined) {
       const validatedContracts = parseInt(contracts);
       if (isNaN(validatedContracts) || validatedContracts < 0 || !Number.isInteger(parseFloat(contracts))) {
-        return NextResponse.json({ 
-          error: "Contracts must be a non-negative integer",
-          code: "INVALID_CONTRACTS" 
+        return NextResponse.json({
+          error: 'Contracts must be a non-negative integer',
+          code: 'INVALID_CONTRACTS',
         }, { status: 400 });
       }
       updates.contracts = validatedContracts;
@@ -310,9 +310,9 @@ export async function PUT(request: NextRequest) {
     if (status !== undefined) {
       const validStatuses = ['active', 'inactive'];
       if (!validStatuses.includes(status)) {
-        return NextResponse.json({ 
-          error: "Status must be one of: active, inactive",
-          code: "INVALID_STATUS" 
+        return NextResponse.json({
+          error: 'Status must be one of: active, inactive',
+          code: 'INVALID_STATUS',
         }, { status: 400 });
       }
       updates.status = status;
@@ -326,7 +326,7 @@ export async function PUT(request: NextRequest) {
     // Calculate total spent from expenses
     const vendorName = updated[0].name;
     const totalSpentResult = await db.select({
-      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`
+      total: sql<number>`COALESCE(SUM(${expenses.amount}), 0)`,
     })
     .from(expenses)
     .where(eq(expenses.vendor, vendorName));
@@ -336,8 +336,8 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ ...updated[0], totalSpent }, { status: 200 });
   } catch (error) {
     console.error('PUT error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
+    return NextResponse.json({
+      error: 'Internal server error: ' + error,
     }, { status: 500 });
   }
 }
@@ -348,9 +348,9 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id || isNaN(parseInt(id))) {
-      return NextResponse.json({ 
-        error: "Valid ID is required",
-        code: "INVALID_ID" 
+      return NextResponse.json({
+        error: 'Valid ID is required',
+        code: 'INVALID_ID',
       }, { status: 400 });
     }
 
@@ -361,9 +361,9 @@ export async function DELETE(request: NextRequest) {
       .limit(1);
 
     if (existingVendor.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Vendor not found',
-        code: 'VENDOR_NOT_FOUND' 
+        code: 'VENDOR_NOT_FOUND',
       }, { status: 404 });
     }
 
@@ -371,17 +371,18 @@ export async function DELETE(request: NextRequest) {
       .where(eq(vendors.id, parseInt(id)))
       .returning();
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Vendor deleted successfully',
-      vendor: deleted[0]
+      vendor: deleted[0],
     }, { status: 200 });
   } catch (error) {
     console.error('DELETE error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error: ' + error 
+    return NextResponse.json({
+      error: 'Internal server error: ' + error,
     }, { status: 500 });
   }
-}import { NextRequest, NextResponse } from 'next/server';
+}
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { vendors, expenses } from '@/db/schema';
 import { eq, like, and, or, desc, asc, sql } from 'drizzle-orm';
