@@ -227,94 +227,94 @@ export default function BudgetPlanning() {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-sm">Jumlah (Rp)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="contoh: 100000000"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="year">Tahun</Label>
+                    <Select value={formData.year} onValueChange={(value) => setFormData({ ...formData, year: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2024">2024</SelectItem>
+                        <SelectItem value="2025">2025</SelectItem>
+                        <SelectItem value="2026">2026</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quarter">Periode</Label>
+                    <Select value={formData.quarter} onValueChange={(value) => setFormData({ ...formData, quarter: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Q1">Q1</SelectItem>
+                        <SelectItem value="Q2">Q2</SelectItem>
+                        <SelectItem value="Q3">Q3</SelectItem>
+                        <SelectItem value="Q4">Q4</SelectItem>
+                        <SelectItem value="Annual">Tahunan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Kategori</Label>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Hardware">Hardware</SelectItem>
+                        <SelectItem value="Software">Software</SelectItem>
+                        <SelectItem value="Services">Services</SelectItem>
+                        <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                        <SelectItem value="Website">Website</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-sm">Jumlah (Rp)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="e.g., 100000000"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    required
+                  <Label htmlFor="description" className="text-sm">Deskripsi</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Deskripsikan tujuan anggaran ini..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="year">Year</Label>
-                  <Select value={formData.year} onValueChange={(value) => setFormData({ ...formData, year: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                      <SelectItem value="2026">2026</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="approver" className="text-sm">Penyetuju</Label>
+                  <Input
+                    id="approver"
+                    placeholder="contoh: Jane Doe, John Smith"
+                    value={formData.approver}
+                    onChange={(e) => setFormData({ ...formData, approver: e.target.value })}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quarter">Period</Label>
-                  <Select value={formData.quarter} onValueChange={(value) => setFormData({ ...formData, quarter: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Q1">Q1</SelectItem>
-                      <SelectItem value="Q2">Q2</SelectItem>
-                      <SelectItem value="Q3">Q3</SelectItem>
-                      <SelectItem value="Q4">Q4</SelectItem>
-                      <SelectItem value="Annual">Annual</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => handleDialogClose(false)} disabled={isSubmitting} className="w-full sm:w-auto">
+                    Batal
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                    {isSubmitting ? (editingBudget ? "Memperbarui..." : "Membuat...") : (editingBudget ? "Perbarui Anggaran" : "Buat Anggaran")}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Hardware">Hardware</SelectItem>
-                      <SelectItem value="Software">Software</SelectItem>
-                      <SelectItem value="Services">Services</SelectItem>
-                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                      <SelectItem value="Website">Website</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe the purpose of this budget..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="approver" className="text-sm">Approver</Label>
-                <Input
-                  id="approver"
-                  placeholder="e.g., Jane Doe, John Smith"
-                  value={formData.approver}
-                  onChange={(e) => setFormData({ ...formData, approver: e.target.value })}
-                />
-              </div>
-
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => handleDialogClose(false)} disabled={isSubmitting} className="w-full sm:w-auto">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                  {isSubmitting ? (editingBudget ? "Updating..." : "Creating...") : (editingBudget ? "Update Budget" : "Create Budget")}
-                </Button>
-              </div>
             </form>
           </DialogContent>
         </Dialog>
