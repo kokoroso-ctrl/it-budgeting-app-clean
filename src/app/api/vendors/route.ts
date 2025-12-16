@@ -50,8 +50,6 @@ export async function GET(request: NextRequest) {
     const sortField = searchParams.get('sort') || 'name';
     const sortOrder = searchParams.get('order') || 'asc';
 
-    let query = db.select().from(vendors);
-
     // Build where conditions
     const conditions = [] as any[];
 
@@ -72,24 +70,25 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(vendors.category, categoryFilter));
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
     // Apply sorting (except totalSpent which needs to be calculated)
-    if (sortField !== 'totalSpent') {
-      const sortColumn = sortField === 'contracts' ? vendors.contracts
-        : sortField === 'createdAt' ? vendors.createdAt
-        : sortField === 'updatedAt' ? vendors.updatedAt
-        : sortField === 'category' ? vendors.category
-        : vendors.name;
+    const sortColumn = sortField === 'contracts' ? vendors.contracts
+      : sortField === 'createdAt' ? vendors.createdAt
+      : sortField === 'updatedAt' ? vendors.updatedAt
+      : sortField === 'category' ? vendors.category
+      : vendors.name;
 
-      query = sortOrder === 'desc'
-        ? query.orderBy(desc(sortColumn))
-        : query.orderBy(asc(sortColumn));
-    }
-
-    const results = await query.limit(limit).offset(offset);
+    const results = conditions.length > 0
+      ? await db.select()
+          .from(vendors)
+          .where(and(...conditions))
+          .orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn))
+          .limit(limit)
+          .offset(offset)
+      : await db.select()
+          .from(vendors)
+          .orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn))
+          .limit(limit)
+          .offset(offset);
 
       // Calculate total spent for each vendor from expenses
       const vendorsWithTotals = await Promise.all(
