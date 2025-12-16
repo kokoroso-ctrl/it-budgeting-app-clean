@@ -191,42 +191,42 @@ export default function BudgetPlanning() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Budget Planning</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">Create and manage annual IT budgets</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Budget
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">
-                {editingBudget ? 'Edit Budget' : 'Create New Budget'}
-              </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
-                {editingBudget 
-                  ? 'Update the budget allocation details'
-                  : 'Define a new budget allocation for your IT department'
-                }
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm">Budget Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., Q1 2024 Infrastructure"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Perencanaan Anggaran</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">Buat dan kelola anggaran IT tahunan</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="w-full sm:w-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Buat Anggaran
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl">
+                  {editingBudget ? 'Edit Anggaran' : 'Buat Anggaran Baru'}
+                </DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm">
+                  {editingBudget 
+                    ? 'Perbarui detail alokasi anggaran'
+                    : 'Tentukan alokasi anggaran baru untuk departemen IT Anda'
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm">Nama Anggaran</Label>
+                    <Input
+                      id="name"
+                      placeholder="contoh: Infrastruktur Q1 2024"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
                 <div className="space-y-2">
                   <Label htmlFor="amount" className="text-sm">Jumlah (Rp)</Label>
                   <Input
