@@ -382,12 +382,6 @@ export async function DELETE(request: NextRequest) {
     }, { status: 500 });
   }
 }
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { vendors, expenses } from '@/db/schema';
-import { eq, like, and, or, desc, asc, sql } from 'drizzle-orm';
-
-export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
