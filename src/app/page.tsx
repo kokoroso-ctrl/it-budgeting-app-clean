@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FileText, Receipt, BarChart3, Menu, LogOut, X } from "lucide-react";
+import { LayoutDashboard, FileText, Receipt, BarChart3, Menu, LogOut, X, User } from "lucide-react";
 import { useSession, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Dashboard from "@/components/Dashboard";
 import BudgetPlanning from "@/components/BudgetPlanning";
 import CostTracking from "@/components/CostTracking";
 import Reporting from "@/components/Reporting";
+import Profile from "@/components/Profile";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
