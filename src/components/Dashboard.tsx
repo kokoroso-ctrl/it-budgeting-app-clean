@@ -828,9 +828,9 @@ export default function Dashboard() {
           <CardHeader className="pb-2 sm:pb-3">
             <CardDescription className="text-xs sm:text-sm">Jumlah Transaksi</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-3xl font-bold">{filteredExpenses.length}</div>
-          </CardContent>
+            <CardContent>
+              <div className="text-xl sm:text-3xl font-bold">{approvedExpenses.length}</div>
+            </CardContent>
         </Card>
       </div>
 
